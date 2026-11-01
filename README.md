@@ -1,40 +1,39 @@
 # Plug
 
-Plug is a provider-neutral foundation for orchestrating multi-AI workflows.
+Plug is a provider-neutral foundation for coordinating a team of AI agents.
 
 ## Current scope
 
-- Explicit task plans represented as a validated dependency DAG.
+- Validated task plans represented as a dependency DAG.
 - Parallel execution for independent tasks, with bounded concurrency.
 - Sequential execution across dependency layers.
-- Provider protocol and explicit provider registry.
-- Environment-backed runtime settings.
-- No API keys or third-party runtime dependencies are required for the core.
+- Explicit agent registry and provider protocol.
+- Adaptive task allocation using skill match, reliability, preference, and load.
+- Strategy selection: direct, parallel, pipeline, or collaborative.
+- Friendly, constructive status and revision messages.
+- No mandatory API keys or third-party runtime dependencies for the core.
+
+## Desktop-first direction
+
+Plug is being designed to coordinate AI tools available on the user's computer.
+The teamwork algorithm is transport-neutral: future adapters may connect to
+local models, desktop applications, or browser sessions where supported.
+This repository does not yet claim automatic control of desktop apps or browser
+interfaces; that requires a real, tested desktop integration layer.
 
 ## Not implemented yet
 
-There is no LLM-driven planner, live provider adapter, persistent job queue,
-web UI, or automatic model selection in this stage. Tests use local fake
-providers; no provider output is fabricated by the runtime.
+There is no LLM-driven planner, desktop automation adapter, persistent job
+queue, web UI, or automatic model discovery in this stage. Tests use local fake
+agents; no provider output is fabricated by the runtime.
 
 ## Quick start
 
 Python 3.11+:
 
-```python
-import asyncio
-from plug import AsyncExecutor, Plan, Task, ProviderRegistry
-
-# Register an implementation of the Provider protocol, then:
-# plan = Plan((Task("draft", "Draft an outline", "your-provider"),))
-# results = await AsyncExecutor(registry).execute(plan)
-```
-
-Run the standard-library tests:
-
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-Provider credentials should be supplied through environment variables or a
-secret manager by future provider adapters. Never commit secrets.
+No API key is needed to use the planning and allocation core. Any future
+integration must document its connection method and permissions explicitly.
