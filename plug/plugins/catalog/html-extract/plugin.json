@@ -1,0 +1,17 @@
+{
+  "id": "html-extract",
+  "name": "HTML Text Extractor",
+  "version": "1.0.0",
+  "description": "Extract page title and readable text from HTML source.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "html",
+    "extract",
+    "title",
+    "text"
+  ]
+}

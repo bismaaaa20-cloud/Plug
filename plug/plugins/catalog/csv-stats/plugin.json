@@ -1,0 +1,16 @@
+{
+  "id": "csv-stats",
+  "name": "CSV Statistics",
+  "version": "1.0.0",
+  "description": "Inspect CSV columns and non-empty values.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "statistics",
+    "data"
+  ]
+}

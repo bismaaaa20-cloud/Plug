@@ -1,0 +1,16 @@
+{
+  "id": "text-hash",
+  "name": "Text Hash",
+  "version": "1.0.0",
+  "description": "Hash text using a supported hashlib algorithm.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "hash",
+    "sha256",
+    "digest"
+  ]
+}

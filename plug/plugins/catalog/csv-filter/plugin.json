@@ -1,0 +1,16 @@
+{
+  "id": "csv-filter",
+  "name": "CSV Filter",
+  "version": "1.0.0",
+  "description": "Filter CSV rows by exact column value.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "filter",
+    "rows"
+  ]
+}

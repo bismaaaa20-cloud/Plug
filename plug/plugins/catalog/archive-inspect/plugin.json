@@ -1,0 +1,16 @@
+{
+  "id": "archive-inspect",
+  "name": "ZIP Inspector",
+  "version": "1.0.0",
+  "description": "List entries in a ZIP archive without extracting.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "zip",
+    "archive",
+    "inspect"
+  ]
+}

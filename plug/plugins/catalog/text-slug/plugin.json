@@ -1,0 +1,16 @@
+{
+  "id": "text-slug",
+  "name": "Slug Generator",
+  "version": "1.0.0",
+  "description": "Convert text into URL-friendly slugs.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "slug",
+    "url",
+    "text"
+  ]
+}

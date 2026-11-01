@@ -1,0 +1,16 @@
+{
+  "id": "text-clean",
+  "name": "Text Cleaner",
+  "version": "1.0.0",
+  "description": "Trim and normalize whitespace.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "clean",
+    "whitespace"
+  ]
+}

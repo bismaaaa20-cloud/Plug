@@ -1,0 +1,16 @@
+{
+  "id": "text-extract",
+  "name": "Pattern Extractor",
+  "version": "1.0.0",
+  "description": "Extract regex matches from text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "extract",
+    "pattern",
+    "regex"
+  ]
+}

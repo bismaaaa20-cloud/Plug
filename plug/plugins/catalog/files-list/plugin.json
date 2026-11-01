@@ -1,0 +1,19 @@
+{
+  "id": "files-list",
+  "name": "File Listing",
+  "version": "1.0.0",
+  "description": "List directory entries with metadata; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "files",
+    "folder",
+    "directory",
+    "list"
+  ]
+}

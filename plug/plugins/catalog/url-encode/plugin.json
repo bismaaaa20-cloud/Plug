@@ -1,0 +1,16 @@
+{
+  "id": "url-encode",
+  "name": "URL Encoder",
+  "version": "1.0.0",
+  "description": "Percent-encode text for URL components.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "url",
+    "encode",
+    "percent"
+  ]
+}

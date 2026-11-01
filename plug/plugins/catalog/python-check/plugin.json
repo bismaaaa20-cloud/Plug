@@ -1,0 +1,17 @@
+{
+  "id": "python-check",
+  "name": "Python Syntax Checker",
+  "version": "1.0.0",
+  "description": "Parse Python source and report syntax validity.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "python",
+    "syntax",
+    "lint",
+    "code"
+  ]
+}

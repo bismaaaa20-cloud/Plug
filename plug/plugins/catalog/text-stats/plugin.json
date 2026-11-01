@@ -1,0 +1,16 @@
+{
+  "id": "text-stats",
+  "name": "Text Statistics",
+  "version": "1.0.0",
+  "description": "Count characters, words and lines.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "count",
+    "words"
+  ]
+}

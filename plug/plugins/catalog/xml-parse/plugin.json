@@ -1,0 +1,16 @@
+{
+  "id": "xml-parse",
+  "name": "XML Inspector",
+  "version": "1.0.0",
+  "description": "Parse XML and report root and direct children.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "xml",
+    "parse",
+    "inspect"
+  ]
+}

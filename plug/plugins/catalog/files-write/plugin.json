@@ -1,0 +1,18 @@
+{
+  "id": "files-write",
+  "name": "File Writer",
+  "version": "1.0.0",
+  "description": "Write UTF-8 text to a file; requires filesystem.write.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.write"
+  ],
+  "keywords": [
+    "files",
+    "write",
+    "save"
+  ]
+}

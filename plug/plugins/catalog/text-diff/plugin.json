@@ -1,0 +1,16 @@
+{
+  "id": "text-diff",
+  "name": "Text Diff",
+  "version": "1.0.0",
+  "description": "Create a unified diff between two texts.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "diff",
+    "compare",
+    "text"
+  ]
+}

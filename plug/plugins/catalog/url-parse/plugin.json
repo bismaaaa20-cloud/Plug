@@ -1,0 +1,16 @@
+{
+  "id": "url-parse",
+  "name": "URL Parser",
+  "version": "1.0.0",
+  "description": "Split a URL into its components without making a network request.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "url",
+    "parse",
+    "host"
+  ]
+}

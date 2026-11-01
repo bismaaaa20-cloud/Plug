@@ -1,0 +1,16 @@
+{
+  "id": "uuid-generate",
+  "name": "UUID Generator",
+  "version": "1.0.0",
+  "description": "Generate random UUID identifiers.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "uuid",
+    "id",
+    "identifier"
+  ]
+}

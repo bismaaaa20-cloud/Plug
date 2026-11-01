@@ -1,0 +1,16 @@
+{
+  "id": "regex-match",
+  "name": "Regex Matcher",
+  "version": "1.0.0",
+  "description": "Find regular-expression matches in text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "regex",
+    "match",
+    "pattern"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "datetime-convert",
+  "name": "Date Time Converter",
+  "version": "1.0.0",
+  "description": "Convert ISO date-time values to UTC and Unix time.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "date",
+    "time",
+    "timezone"
+  ]
+}

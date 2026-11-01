@@ -1,0 +1,16 @@
+{
+  "id": "json-format",
+  "name": "JSON Formatter",
+  "version": "1.0.0",
+  "description": "Validate and pretty-print JSON.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "format",
+    "pretty"
+  ]
+}

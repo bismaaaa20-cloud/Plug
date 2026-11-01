@@ -1,0 +1,16 @@
+{
+  "id": "math-calc",
+  "name": "Safe Calculator",
+  "version": "1.0.0",
+  "description": "Evaluate basic arithmetic without eval or code execution.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "math",
+    "calculate",
+    "calculator"
+  ]
+}

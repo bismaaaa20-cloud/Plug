@@ -1,0 +1,16 @@
+{
+  "id": "json-query",
+  "name": "JSON Path Lookup",
+  "version": "1.0.0",
+  "description": "Read a nested JSON value using a simple dotted path.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "lookup",
+    "query"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "base64-decode",
+  "name": "Base64 Decoder",
+  "version": "1.0.0",
+  "description": "Decode validated Base64 as UTF-8 text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "base64",
+    "decode"
+  ]
+}

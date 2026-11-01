@@ -1,0 +1,15 @@
+{
+  "id": "base64-encode",
+  "name": "Base64 Encoder",
+  "version": "1.0.0",
+  "description": "Encode UTF-8 text as Base64.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "base64",
+    "encode"
+  ]
+}

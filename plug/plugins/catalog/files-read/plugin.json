@@ -1,0 +1,18 @@
+{
+  "id": "files-read",
+  "name": "File Reader",
+  "version": "1.0.0",
+  "description": "Read a UTF-8 text file; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "files",
+    "read",
+    "open"
+  ]
+}
