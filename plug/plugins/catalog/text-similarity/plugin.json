@@ -1,0 +1,16 @@
+{
+  "id": "text-similarity",
+  "name": "Text Similarity",
+  "version": "1.0.0",
+  "description": "Compare two strings using a sequence similarity ratio.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "similarity",
+    "compare"
+  ]
+}

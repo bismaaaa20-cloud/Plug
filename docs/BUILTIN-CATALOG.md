@@ -1,8 +1,8 @@
-# Built-in catalog: 100 plugins + 100 skills
+# Built-in catalog: 125 plugins + 125 skills
 
 Plug includes a first-party catalog definition in `plug/builtin_catalog.py`.
-It uses only the Python standard library and contains exactly 100 plugin
-implementations and 100 task skills.
+It uses only the Python standard library and contains exactly 125 plugin
+implementations and 125 task skills.
 
 ## Install the catalog
 
@@ -15,9 +15,9 @@ python -m plug.builtin_catalog --install
 This creates:
 
 - `plug/plugins/catalog/<plugin-id>/plugin.json` and `plugin.py` for each of
-  the 100 plugins.
+  the 125 plugins.
 - `plug/skills/catalog/<skill-id>/SKILL.md` and `scripts/main.py` for each of
-  the 100 skills.
+  the 125 skills.
 
 The installer refuses to overwrite existing item folders. If installation
 stops because a folder already exists, inspect that folder rather than deleting
@@ -123,7 +123,7 @@ an LLM semantic router.
 
 Additional task skills: ui-builder, web-research, video-analysis, image-creation, audio-transcription, frontend-development, backend-development, browser-automation, accessibility-audit, data-visualization.
 
-Additional skills: vector-graphics, infographic-design, iconography-review, brand-guidelines, typography-review, motion-design, interaction-design, service-design, customer-journey-mapping, competitive-analysis, market-research, technical-diagramming, architecture-review, microservice-design, api-design, security-testing, threat-modeling, incident-postmortem, privacy-impact-assessment, governance-review, data-storytelling, statistical-analysis, experimentation, prompt-library-management, knowledge-base-design, ui-prototyping, dashboard-design, mobile-usability, web-accessibility-testing, web-fact-checking, video-edit-planning, subtitle-review, animation-direction, icon-design, design-critique, ux-research, usability-testing, information-architecture, content-design, product-design, data-engineering, data-pipeline-design, database-optimization, query-optimization, data-quality-audit, ml-experiment-design, model-evaluation, prompt-testing, support-triage, release-notes, web-page-reading, video-storyboard, video-captioning, audio-analysis, audio-cleanup, ux-writing, component-library, mobile-ui-design, design-system, prompt-engineering, test-automation, ci-cd, deployment-readiness, observability, documentation-review.
+Additional skills: technical-translation, copyediting, product-copywriting, longform-writing, academic-writing, grant-writing, policy-writing, incident-communications, executive-briefing, board-reporting, stakeholder-management, project-risk-management, portfolio-management, agile-facilitation, sprint-planning, backlog-refinement, requirements-analysis, business-analysis, process-improvement, operations-playbook, financial-model-review, budgeting-analysis, pricing-strategy, vendor-evaluation, contract-review, vector-graphics, infographic-design, iconography-review, brand-guidelines, typography-review, motion-design, interaction-design, service-design, customer-journey-mapping, competitive-analysis, market-research, technical-diagramming, architecture-review, microservice-design, api-design, security-testing, threat-modeling, incident-postmortem, privacy-impact-assessment, governance-review, data-storytelling, statistical-analysis, experimentation, prompt-library-management, knowledge-base-design, ui-prototyping, dashboard-design, mobile-usability, web-accessibility-testing, web-fact-checking, video-edit-planning, subtitle-review, animation-direction, icon-design, design-critique, ux-research, usability-testing, information-architecture, content-design, product-design, data-engineering, data-pipeline-design, database-optimization, query-optimization, data-quality-audit, ml-experiment-design, model-evaluation, prompt-testing, support-triage, release-notes, web-page-reading, video-storyboard, video-captioning, audio-analysis, audio-cleanup, ux-writing, component-library, mobile-ui-design, design-system, prompt-engineering, test-automation, ci-cd, deployment-readiness, observability, documentation-review.
 
 ## Verify
 
@@ -138,7 +138,7 @@ plugin handler, safe calculator behavior, and overwrite protection.
 
 `web-fetch` requires the explicit `network.read` permission. It accepts public HTTP(S) URLs on standard ports, blocks non-public resolved addresses and validates redirect destinations, supports text responses only, and caps the response body at 1 MB. It does not run JavaScript or automate authenticated browser sessions.
 
-All 100 plugins are local standard-library operations. No cloud account, API
+All 125 plugins are local standard-library operations. No cloud account, API
 key, network access, or MCP server is required. The ZIP inspector lists entries
 but does not extract them. URL parsing does not make requests. File access is
 permission-gated, but plugins execute as trusted in-process Python and are not

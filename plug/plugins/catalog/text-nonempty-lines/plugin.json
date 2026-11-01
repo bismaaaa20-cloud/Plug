@@ -1,0 +1,16 @@
+{
+  "id": "text-nonempty-lines",
+  "name": "Non-empty Line Filter",
+  "version": "1.0.0",
+  "description": "Keep only lines containing non-whitespace characters.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "lines",
+    "filter"
+  ]
+}

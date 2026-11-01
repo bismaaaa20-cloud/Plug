@@ -1,0 +1,16 @@
+{
+  "id": "json-array-sort",
+  "name": "JSON Array Sorter",
+  "version": "1.0.0",
+  "description": "Sort a JSON array by a requested object field or scalar.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "array",
+    "sort"
+  ]
+}

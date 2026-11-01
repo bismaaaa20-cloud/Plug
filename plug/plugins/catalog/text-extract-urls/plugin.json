@@ -1,0 +1,16 @@
+{
+  "id": "text-extract-urls",
+  "name": "URL Extractor",
+  "version": "1.0.0",
+  "description": "Find HTTP and HTTPS URLs in supplied text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "url",
+    "extract"
+  ]
+}

@@ -1,4 +1,4 @@
-"""First-party Plug catalog: 100 plugins and 100 task-specific skills.
+"""First-party Plug catalog: 125 plugins and 125 task-specific skills.
 
 Run `python -m plug.builtin_catalog --install` to materialize the catalog under
 `plug/plugins/catalog` and `plug/skills/catalog`.
@@ -849,6 +849,168 @@ def _date_diff(a):
     return {"days": (second - first).days, "first": first.isoformat(), "second": second.isoformat()}
 
 
+def _run_extension_task(task, a):
+    if task == "text-extract-emails":
+        values = re.findall(r"[\w.+-]+@[\w.-]+\.\w{2,}", str(a.get("text", "")))
+        return {"matches": values, "count": len(values)}
+    if task == "text-extract-urls":
+        values = re.findall(r"https?://[^\s<>\"']+", str(a.get("text", "")))
+        return {"matches": values, "count": len(values)}
+    if task == "text-extract-hashtags":
+        values = re.findall(r"(?<!\w)#[\w]+", str(a.get("text", "")))
+        return {"hashtags": values, "count": len(values)}
+    if task == "text-extract-mentions":
+        values = re.findall(r"(?<!\w)@[A-Za-z0-9_]{1,30}", str(a.get("text", "")))
+        return {"mentions": values, "count": len(values)}
+    if task == "text-extract-phones":
+        values = re.findall(r"(?<!\w)\+?\d[\d ().-]{6,}\d(?!\w)", str(a.get("text", "")))
+        return {"candidates": values, "count": len(values), "note": "Pattern matches are not verified phone numbers."}
+    if task == "text-find-replace":
+        text, find = str(a.get("text", "")), str(a.get("find", ""))
+        if not find: raise ValueError("find cannot be empty")
+        return {"text": text.replace(find, str(a.get("replace", ""))), "replacements": text.count(find)}
+    if task == "text-nonempty-lines":
+        lines = [line for line in str(a.get("text", "")).splitlines() if line.strip()]
+        return {"lines": lines, "count": len(lines)}
+    if task == "text-common-prefix":
+        left, right = str(a.get("left", "")), str(a.get("right", ""))
+        i = 0
+        while i < min(len(left), len(right)) and left[i] == right[i]: i += 1
+        return {"prefix": left[:i], "length": i}
+    if task == "text-common-suffix":
+        left, right = str(a.get("left", "")), str(a.get("right", ""))
+        i = 0
+        while i < min(len(left), len(right)) and left[-i-1] == right[-i-1]: i += 1
+        return {"suffix": left[len(left)-i:] if i else "", "length": i}
+    if task == "text-word-count":
+        words = str(a.get("text", "")).split()
+        return {"words": len(words), "characters": len(str(a.get("text", ""))), "unique": len({w.casefold() for w in words})}
+    if task == "text-paragraph-count":
+        parts = [p for p in re.split(r"\n\s*\n", str(a.get("text", "")).strip()) if p.strip()]
+        return {"paragraphs": len(parts), "lengths": [len(p) for p in parts]}
+    if task == "text-title-case":
+        return {"text": str(a.get("text", "")).title()}
+    if task == "text-similarity":
+        ratio = difflib.SequenceMatcher(None, str(a.get("left", "")), str(a.get("right", ""))).ratio()
+        return {"ratio": ratio, "percent": round(ratio * 100, 2)}
+    if task == "text-quote-csv":
+        output = io.StringIO()
+        csv.writer(output, lineterminator="").writerow([str(a.get("text", ""))])
+        return {"csv_field": output.getvalue()}
+    if task == "markdown-checklist":
+        items = []
+        for line in str(a.get("markdown", a.get("text", ""))).splitlines():
+            match = re.match(r"^\s*[-*+]\s+\[([ xX])\]\s+(.+)$", line)
+            if match: items.append({"checked": match.group(1).lower() == "x", "text": match.group(2).strip()})
+        return {"items": items, "checked": sum(item["checked"] for item in items), "total": len(items)}
+    if task == "markdown-frontmatter":
+        source = str(a.get("markdown", a.get("text", ""))); lines = source.splitlines()
+        if not lines or lines[0].strip() != "---": return {"metadata": {}, "body": source}
+        try: end = lines.index("---", 1)
+        except ValueError: raise ValueError("front matter closing --- not found")
+        metadata = {}
+        for line in lines[1:end]:
+            if ":" in line:
+                key, value = line.split(":", 1); metadata[key.strip()] = value.strip().strip("\"'")
+        return {"metadata": metadata, "body": "\n".join(lines[end+1:])}
+    if task == "markdown-heading-levels":
+        items = []
+        for number, line in enumerate(str(a.get("markdown", a.get("text", ""))).splitlines(), 1):
+            match = re.match(r"^\s*(#{1,6})\s+(.+?)\s*#*\s*$", line)
+            if match: items.append({"level": len(match.group(1)), "text": match.group(2), "line": number})
+        return {"headings": items, "count": len(items)}
+    if task == "json-deep-count":
+        obj = a.get("json", a.get("data")); obj = json.loads(obj) if isinstance(obj, str) else obj
+        counts = {"objects": 0, "arrays": 0, "keys": 0, "scalars": 0}
+        def walk(value):
+            if isinstance(value, dict):
+                counts["objects"] += 1; counts["keys"] += len(value)
+                for item in value.values(): walk(item)
+            elif isinstance(value, list):
+                counts["arrays"] += 1
+                for item in value: walk(item)
+            else: counts["scalars"] += 1
+        walk(obj); return counts
+    if task == "json-array-sort":
+        items = a.get("items", a.get("json", [])); items = json.loads(items) if isinstance(items, str) else items
+        if not isinstance(items, list): raise ValueError("input must be a JSON array")
+        key = str(a.get("key", ""))
+        def order(item):
+            value = item.get(key) if isinstance(item, dict) and key else item
+            return (value is None, str(value).casefold())
+        return {"items": sorted(items, key=order, reverse=bool(a.get("reverse", False)))}
+    if task == "json-array-dedupe":
+        items = a.get("items", a.get("json", [])); items = json.loads(items) if isinstance(items, str) else items
+        if not isinstance(items, list): raise ValueError("input must be a JSON array")
+        seen, result = set(), []
+        for item in items:
+            signature = json.dumps(item, sort_keys=True, ensure_ascii=False)
+            if signature not in seen: seen.add(signature); result.append(item)
+        return {"items": result, "removed": len(items) - len(result)}
+    if task == "csv-column-rename":
+        reader = csv.DictReader(io.StringIO(str(a.get("csv", ""))))
+        fields, old, new = reader.fieldnames or [], str(a.get("old", "")), str(a.get("new", ""))
+        if old not in fields or not new or (new in fields and new != old): raise ValueError("invalid old or new column name")
+        new_fields = [new if field == old else field for field in fields]
+        output = io.StringIO(); writer = csv.DictWriter(output, fieldnames=new_fields); writer.writeheader()
+        for row in reader: row[new] = row.pop(old, ""); writer.writerow(row)
+        return {"csv": output.getvalue(), "columns": new_fields}
+    if task == "csv-filter-contains":
+        reader = csv.DictReader(io.StringIO(str(a.get("csv", ""))))
+        fields, column = reader.fieldnames or [], str(a.get("column", ""))
+        if column not in fields: raise ValueError("column not found")
+        needle = str(a.get("contains", "")).casefold()
+        rows = [row for row in reader if needle in (row.get(column) or "").casefold()]
+        output = io.StringIO()
+        if fields:
+            writer = csv.DictWriter(output, fieldnames=fields); writer.writeheader(); writer.writerows(rows)
+        return {"csv": output.getvalue(), "matched": len(rows)}
+    if task == "csv-filter-range":
+        reader = csv.DictReader(io.StringIO(str(a.get("csv", ""))))
+        fields, column = reader.fieldnames or [], str(a.get("column", ""))
+        if column not in fields: raise ValueError("column not found")
+        low, high = float(a.get("minimum", float("-inf"))), float(a.get("maximum", float("inf")))
+        if low > high: raise ValueError("minimum cannot exceed maximum")
+        rows = []
+        for row in reader:
+            try: value = float(row.get(column, ""))
+            except (TypeError, ValueError): continue
+            if low <= value <= high: rows.append(row)
+        output = io.StringIO()
+        if fields:
+            writer = csv.DictWriter(output, fieldnames=fields); writer.writeheader(); writer.writerows(rows)
+        return {"csv": output.getvalue(), "matched": len(rows)}
+    if task == "csv-pivot":
+        reader = csv.DictReader(io.StringIO(str(a.get("csv", ""))))
+        rows, fields = list(reader), reader.fieldnames or []
+        group, value, agg = str(a.get("group_by", "")), str(a.get("value_column", "")), str(a.get("aggregate", "count"))
+        if group not in fields: raise ValueError("group_by column not found")
+        if agg == "sum" and value not in fields: raise ValueError("value_column not found")
+        if agg not in {"count", "sum"}: raise ValueError("aggregate must be count or sum")
+        result = {}
+        for row in rows:
+            key = row.get(group, ""); bucket = result.setdefault(key, {"count": 0, "sum": 0.0}); bucket["count"] += 1
+            if agg == "sum":
+                try: bucket["sum"] += float(row.get(value, 0) or 0)
+                except ValueError: raise ValueError("sum column must contain numbers")
+        return {"groups": [{"key": key, **data} for key, data in result.items()], "aggregate": agg}
+    if task == "csv-validate":
+        reader = csv.DictReader(io.StringIO(str(a.get("csv", ""))))
+        fields, rows = reader.fieldnames or [], list(reader); required = [v.strip() for v in a.get("required", [])]
+        missing_headers = [key for key in required if key not in fields]
+        missing_values = [{"row": i+1, "column": key} for i, row in enumerate(rows)
+                          for key in required if key in fields and not (row.get(key) or "").strip()]
+        return {"valid": not missing_headers and not missing_values, "missing_headers": missing_headers,
+                "missing_values": missing_values, "rows": len(rows)}
+    raise KeyError("unknown extension task: " + task)
+
+
+def _make_extension_handler(task):
+    def handler(arguments):
+        return _run_extension_task(task, arguments)
+    return handler
+
+
 PLUGIN_DEFINITIONS = [
     ("text-stats", "Text Statistics", "Count characters, words and lines.", ("text", "count", "words"), _text_stats),
     ("text-clean", "Text Cleaner", "Trim and normalize whitespace.", ("text", "clean", "whitespace"), _text_clean),
@@ -950,6 +1112,31 @@ PLUGIN_DEFINITIONS = [
     ("date-weekday", "Weekday Calculator", "Return the weekday name for an ISO date.", ["date","weekday","calendar"], _date_weekday),
     ("date-add-days", "Date Arithmetic", "Add or subtract a number of days from an ISO date.", ["date","add days","calendar"], _date_add_days),
     ("date-diff", "Date Difference", "Calculate the signed number of days between two ISO dates.", ("date", "difference", "calendar"), _date_diff),
+    ("text-extract-emails", "Email Extractor", "Find email-like addresses in supplied text.", ["text","email","extract"], _make_extension_handler("text-extract-emails")),
+    ("text-extract-urls", "URL Extractor", "Find HTTP and HTTPS URLs in supplied text.", ["text","url","extract"], _make_extension_handler("text-extract-urls")),
+    ("text-extract-hashtags", "Hashtag Extractor", "Extract hashtag tokens from social text.", ["text","hashtag","social"], _make_extension_handler("text-extract-hashtags")),
+    ("text-extract-mentions", "Mention Extractor", "Extract @mentions from social text.", ["text","mention","social"], _make_extension_handler("text-extract-mentions")),
+    ("text-extract-phones", "Phone Pattern Extractor", "Extract phone-number-like strings for manual review.", ["text","phone","extract"], _make_extension_handler("text-extract-phones")),
+    ("text-find-replace", "Literal Text Replacer", "Replace exact text without interpreting regular expressions.", ["text","replace","literal"], _make_extension_handler("text-find-replace")),
+    ("text-nonempty-lines", "Non-empty Line Filter", "Keep only lines containing non-whitespace characters.", ["text","lines","filter"], _make_extension_handler("text-nonempty-lines")),
+    ("text-common-prefix", "Common Prefix Finder", "Find the shared starting substring of two strings.", ["text","common prefix","compare"], _make_extension_handler("text-common-prefix")),
+    ("text-common-suffix", "Common Suffix Finder", "Find the shared ending substring of two strings.", ["text","common suffix","compare"], _make_extension_handler("text-common-suffix")),
+    ("text-word-count", "Word Counter", "Count whitespace-delimited words and unique tokens.", ["text","word count"], _make_extension_handler("text-word-count")),
+    ("text-paragraph-count", "Paragraph Counter", "Count non-empty paragraphs separated by blank lines.", ["text","paragraph","count"], _make_extension_handler("text-paragraph-count")),
+    ("text-title-case", "Title Case Formatter", "Convert text to title case.", ["text","title case","format"], _make_extension_handler("text-title-case")),
+    ("text-similarity", "Text Similarity", "Compare two strings using a sequence similarity ratio.", ["text","similarity","compare"], _make_extension_handler("text-similarity")),
+    ("text-quote-csv", "Text to CSV Field", "Quote a text value using CSV escaping rules.", ["text","csv","quote"], _make_extension_handler("text-quote-csv")),
+    ("markdown-checklist", "Markdown Checklist Parser", "Extract checked and unchecked Markdown task items.", ["markdown","checklist","tasks"], _make_extension_handler("markdown-checklist")),
+    ("markdown-frontmatter", "Markdown Front Matter Reader", "Read simple key-value front matter without a YAML dependency.", ["markdown","frontmatter","metadata"], _make_extension_handler("markdown-frontmatter")),
+    ("markdown-heading-levels", "Markdown Heading Outline", "Extract Markdown headings with levels and source line numbers.", ["markdown","heading","outline"], _make_extension_handler("markdown-heading-levels")),
+    ("json-deep-count", "JSON Structure Counter", "Count nested objects, arrays, keys, and scalar values recursively.", ["json","deep count","structure"], _make_extension_handler("json-deep-count")),
+    ("json-array-sort", "JSON Array Sorter", "Sort a JSON array by a requested object field or scalar.", ["json","array","sort"], _make_extension_handler("json-array-sort")),
+    ("json-array-dedupe", "JSON Array Deduplicator", "Remove duplicate JSON values while preserving first occurrence.", ["json","array","dedupe"], _make_extension_handler("json-array-dedupe")),
+    ("csv-column-rename", "CSV Column Renamer", "Rename one CSV header while preserving rows.", ["csv","rename","column"], _make_extension_handler("csv-column-rename")),
+    ("csv-filter-contains", "CSV Contains Filter", "Keep CSV rows where a selected column contains a text fragment.", ["csv","filter","contains"], _make_extension_handler("csv-filter-contains")),
+    ("csv-filter-range", "CSV Numeric Range Filter", "Filter CSV rows by an inclusive numeric range.", ["csv","filter","range"], _make_extension_handler("csv-filter-range")),
+    ("csv-pivot", "CSV Group Summary", "Group CSV rows and calculate counts or numeric sums.", ["csv","pivot","group"], _make_extension_handler("csv-pivot")),
+    ("csv-validate", "CSV Schema Validator", "Check required headers and missing values in CSV rows.", ["csv","validate","schema"], _make_extension_handler("csv-validate")),
 ]
 
 SKILL_DEFINITIONS = [
@@ -1053,6 +1240,31 @@ SKILL_DEFINITIONS = [
     ("experimentation", "Design controlled experiments and interpret their results.", "experiment design, A/B test", "Define hypothesis, target metric, guardrails, randomization, sample size assumptions, and stopping policy. Check instrumentation and segment balance. Report uncertainty and practical significance."),
     ("prompt-library-management", "Organize reusable prompts with versioning and evaluation notes.", "prompt library, prompt catalog", "Group prompts by task and owner. Document variables, model assumptions, examples, and known limits. Version revisions and attach a representative evaluation set. Remove stale or duplicate prompt entries."),
     ("knowledge-base-design", "Design a searchable knowledge base with clear governance.", "knowledge base, FAQ architecture", "Identify audience, recurring questions, source of truth, owners, and review cadence. Use consistent taxonomy, metadata, and article templates. Include freshness indicators and escalation paths when answers are unavailable."),
+    ("technical-translation", "Translate technical content while preserving terminology and code context.", "technical translation, translate documentation", "Identify the target audience and locale. Preserve code, placeholders, commands, units, identifiers, and product names. Maintain an approved glossary and flag ambiguous terms. Review the translation against the source for completeness."),
+    ("copyediting", "Improve grammar, flow, consistency, and readability in finished drafts.", "copyedit, copy editing, proofread", "Preserve the author's meaning and facts. Correct grammar, punctuation, flow, and consistency. Apply the requested style guide and return a clean version plus a short change summary when useful."),
+    ("product-copywriting", "Write persuasive product copy grounded in actual features.", "product copy, product description, landing page", "Identify audience, problem, differentiator, proof, and call to action. Use specific benefits supported by verified features. Avoid fabricated claims, guarantees, or unsupported comparisons."),
+    ("longform-writing", "Structure and draft long-form articles or guides.", "longform, article, essay, guide writing", "Define audience, purpose, thesis, and scope. Build a logical outline, support claims with credible evidence, and keep sections coherent. Avoid repetition and cite factual assertions."),
+    ("academic-writing", "Improve academic structure, argumentation, and citation discipline.", "academic writing, paper, essay", "Clarify research question, claim, method, evidence, and limitations. Keep citations attached to supported claims. Distinguish analysis from sources and avoid inventing references or results."),
+    ("grant-writing", "Prepare evidence-led grant applications and project narratives.", "grant proposal, funding application", "Extract eligibility, evaluation criteria, budget rules, and deadlines from the funder's official guidance. Align objectives, activities, outcomes, and evaluation. Never invent organizational credentials or commitments."),
+    ("policy-writing", "Draft clear internal policies with scope and enforcement rules.", "policy document, company policy", "Define purpose, scope, roles, rules, exceptions, reporting, and review cadence. Use enforceable language and align with verified requirements. Flag legal or regulatory issues for qualified review."),
+    ("incident-communications", "Prepare accurate updates during technical incidents.", "incident update, outage communication", "Confirm current impact, affected services, mitigation, and next update time. Use plain language, avoid blame and speculation, and keep internal details secure. Update only when facts change."),
+    ("executive-briefing", "Turn complex work into a decision-ready executive brief.", "executive summary, leadership briefing", "Lead with the decision needed, recommendation, impact, cost, and risk. Keep evidence concise and traceable. State assumptions, options, and unresolved questions without hiding uncertainty."),
+    ("board-reporting", "Prepare concise board-level reports and governance updates.", "board report, board presentation", "Focus on strategic progress, financial or operational indicators, major risks, decisions, and accountability. Verify every figure and define metrics. Avoid activity lists without outcomes."),
+    ("stakeholder-management", "Map stakeholders and plan communication and decision paths.", "stakeholder plan, stakeholder analysis", "Identify affected groups, influence, interests, and information needs. Define owners, cadence, channels, and escalation. Track decisions and feedback while avoiding unnecessary personal data."),
+    ("project-risk-management", "Maintain a practical project risk register and mitigation plan.", "project risk register, manage project risks", "Record risk statement, cause, likelihood, impact, trigger, owner, response, and residual risk. Review regularly and tie mitigations to milestones. Separate current risks from closed issues."),
+    ("portfolio-management", "Prioritize and balance a portfolio of competing initiatives.", "project portfolio, portfolio prioritization", "Define strategic alignment, value, effort, dependencies, capacity, and risk criteria. Compare initiatives transparently and show trade-offs. Do not imply subjective scoring is objective."),
+    ("agile-facilitation", "Facilitate agile ceremonies with clear outcomes and follow-through.", "agile facilitator, scrum ceremony", "Set a clear purpose and timebox. Invite concise participation, surface blockers, and capture decisions and owners. Keep ceremonies focused on delivery outcomes rather than status theater."),
+    ("sprint-planning", "Turn prioritized backlog items into a realistic sprint goal and plan.", "sprint planning, sprint goal", "Review team capacity, priorities, dependencies, and acceptance criteria. Agree one outcome-based sprint goal and select work based on demonstrated throughput, not wishful commitments."),
+    ("backlog-refinement", "Improve backlog item clarity, sequencing, and readiness.", "backlog refinement, user story", "Clarify user value, scope, dependencies, acceptance criteria, and open questions. Split oversized work and surface uncertainty. Avoid estimating before the team understands the item."),
+    ("requirements-analysis", "Elicit, structure, and validate business and system requirements.", "requirements analysis, requirement document", "Identify stakeholders, goals, constraints, and exceptions. Distinguish functional, non-functional, and regulatory needs. Make requirements testable and traceable to business outcomes."),
+    ("business-analysis", "Analyze business processes and convert findings into actionable requirements.", "business analysis, process analysis", "Map current state, pain points, actors, data, and outcomes. Validate root causes with evidence. Define future-state options, measurable benefits, assumptions, and dependencies."),
+    ("process-improvement", "Identify waste and redesign processes for measurable outcomes.", "process improvement, workflow optimization", "Map the actual process, handoffs, wait time, rework, and failure points. Establish a baseline and choose a small improvement. Measure impact and prevent regression."),
+    ("operations-playbook", "Write operational runbooks for repeatable tasks and incidents.", "runbook, operations playbook", "State purpose, prerequisites, access, steps, verification, rollback, escalation, and ownership. Use copyable safe commands and warn before destructive actions. Test instructions with a fresh operator."),
+    ("financial-model-review", "Review financial models for logic, assumptions, and scenario integrity.", "financial model, forecast review", "Check units, formulas, input assumptions, dependencies, and scenario controls. Reconcile totals and sensitivity cases. Label estimates and do not present projections as guaranteed outcomes."),
+    ("budgeting-analysis", "Analyze budgets, variances, and spending trade-offs.", "budget analysis, budget variance", "Check period, currency, accounting basis, and category definitions. Compare actuals to budget, explain variance drivers, and identify one-time effects. Verify totals and state data gaps."),
+    ("pricing-strategy", "Evaluate pricing options against value, costs, and market context.", "pricing strategy, price model", "Identify segments, value metrics, costs, alternatives, and willingness-to-pay evidence. Model tiering and trade-offs. Avoid unsupported competitor price claims and validate with customer research."),
+    ("vendor-evaluation", "Compare vendors using consistent criteria and documented evidence.", "vendor selection, vendor review", "Define mandatory requirements, security, privacy, cost, reliability, support, and exit criteria. Score evidence consistently and record gaps. Do not infer compliance from marketing statements."),
+    ("contract-review", "Summarize contract clauses and flag issues for qualified legal review.", "contract review, agreement analysis", "Identify parties, scope, fees, term, renewal, termination, liability, data handling, confidentiality, IP, and dispute clauses. Quote exact clause references. Do not provide legal conclusions or substitute for counsel."),
 ]
 
 def run_builtin(context, arguments):
@@ -1068,7 +1280,7 @@ def run_builtin(context, arguments):
 
 
 def install_builtin_catalog(plugin_root=None, skill_root=None):
-    """Materialize all 100 plugins and 100 skills; never overwrite existing files."""
+    """Materialize all 125 plugins and 125 skills; never overwrite existing files."""
     import json as _json
     from pathlib import Path as _Path
     base = _Path(__file__).resolve().parent
@@ -1117,7 +1329,7 @@ def install_builtin_catalog(plugin_root=None, skill_root=None):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Install Plug's 100 built-in plugins and 100 skills.")
+    parser = argparse.ArgumentParser(description="Install Plug's 125 built-in plugins and 125 skills.")
     parser.add_argument("--install", action="store_true", help="materialize the bundled catalog")
     args = parser.parse_args()
     if args.install:

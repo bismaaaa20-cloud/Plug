@@ -1,0 +1,16 @@
+{
+  "id": "json-array-dedupe",
+  "name": "JSON Array Deduplicator",
+  "version": "1.0.0",
+  "description": "Remove duplicate JSON values while preserving first occurrence.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "array",
+    "dedupe"
+  ]
+}

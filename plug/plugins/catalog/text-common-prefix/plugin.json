@@ -1,0 +1,16 @@
+{
+  "id": "text-common-prefix",
+  "name": "Common Prefix Finder",
+  "version": "1.0.0",
+  "description": "Find the shared starting substring of two strings.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "common prefix",
+    "compare"
+  ]
+}

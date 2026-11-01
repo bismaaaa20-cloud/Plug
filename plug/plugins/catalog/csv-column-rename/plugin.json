@@ -1,0 +1,16 @@
+{
+  "id": "csv-column-rename",
+  "name": "CSV Column Renamer",
+  "version": "1.0.0",
+  "description": "Rename one CSV header while preserving rows.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "rename",
+    "column"
+  ]
+}

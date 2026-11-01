@@ -1,0 +1,16 @@
+{
+  "id": "text-quote-csv",
+  "name": "Text to CSV Field",
+  "version": "1.0.0",
+  "description": "Quote a text value using CSV escaping rules.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "csv",
+    "quote"
+  ]
+}

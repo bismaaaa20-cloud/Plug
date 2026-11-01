@@ -1,0 +1,16 @@
+{
+  "id": "text-paragraph-count",
+  "name": "Paragraph Counter",
+  "version": "1.0.0",
+  "description": "Count non-empty paragraphs separated by blank lines.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "paragraph",
+    "count"
+  ]
+}

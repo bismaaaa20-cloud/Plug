@@ -1,0 +1,16 @@
+{
+  "id": "markdown-heading-levels",
+  "name": "Markdown Heading Outline",
+  "version": "1.0.0",
+  "description": "Extract Markdown headings with levels and source line numbers.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "markdown",
+    "heading",
+    "outline"
+  ]
+}

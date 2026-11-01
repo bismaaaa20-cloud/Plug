@@ -1,0 +1,16 @@
+{
+  "id": "text-extract-hashtags",
+  "name": "Hashtag Extractor",
+  "version": "1.0.0",
+  "description": "Extract hashtag tokens from social text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "hashtag",
+    "social"
+  ]
+}

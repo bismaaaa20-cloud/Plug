@@ -1,0 +1,16 @@
+{
+  "id": "text-common-suffix",
+  "name": "Common Suffix Finder",
+  "version": "1.0.0",
+  "description": "Find the shared ending substring of two strings.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "common suffix",
+    "compare"
+  ]
+}

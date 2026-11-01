@@ -1,0 +1,16 @@
+{
+  "id": "text-find-replace",
+  "name": "Literal Text Replacer",
+  "version": "1.0.0",
+  "description": "Replace exact text without interpreting regular expressions.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "replace",
+    "literal"
+  ]
+}

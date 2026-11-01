@@ -1,0 +1,16 @@
+{
+  "id": "text-extract-emails",
+  "name": "Email Extractor",
+  "version": "1.0.0",
+  "description": "Find email-like addresses in supplied text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "email",
+    "extract"
+  ]
+}

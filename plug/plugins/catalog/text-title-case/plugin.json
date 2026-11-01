@@ -1,0 +1,16 @@
+{
+  "id": "text-title-case",
+  "name": "Title Case Formatter",
+  "version": "1.0.0",
+  "description": "Convert text to title case.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "title case",
+    "format"
+  ]
+}

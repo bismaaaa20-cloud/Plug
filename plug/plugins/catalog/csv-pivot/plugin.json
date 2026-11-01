@@ -1,0 +1,16 @@
+{
+  "id": "csv-pivot",
+  "name": "CSV Group Summary",
+  "version": "1.0.0",
+  "description": "Group CSV rows and calculate counts or numeric sums.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "pivot",
+    "group"
+  ]
+}

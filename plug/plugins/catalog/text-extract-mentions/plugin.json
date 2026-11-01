@@ -1,0 +1,16 @@
+{
+  "id": "text-extract-mentions",
+  "name": "Mention Extractor",
+  "version": "1.0.0",
+  "description": "Extract @mentions from social text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "mention",
+    "social"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "csv-filter-contains",
+  "name": "CSV Contains Filter",
+  "version": "1.0.0",
+  "description": "Keep CSV rows where a selected column contains a text fragment.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "filter",
+    "contains"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "csv-filter-range",
+  "name": "CSV Numeric Range Filter",
+  "version": "1.0.0",
+  "description": "Filter CSV rows by an inclusive numeric range.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "filter",
+    "range"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "markdown-checklist",
+  "name": "Markdown Checklist Parser",
+  "version": "1.0.0",
+  "description": "Extract checked and unchecked Markdown task items.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "markdown",
+    "checklist",
+    "tasks"
+  ]
+}

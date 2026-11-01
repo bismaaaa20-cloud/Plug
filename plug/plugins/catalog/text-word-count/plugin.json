@@ -1,0 +1,15 @@
+{
+  "id": "text-word-count",
+  "name": "Word Counter",
+  "version": "1.0.0",
+  "description": "Count whitespace-delimited words and unique tokens.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "word count"
+  ]
+}

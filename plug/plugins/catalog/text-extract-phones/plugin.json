@@ -1,0 +1,16 @@
+{
+  "id": "text-extract-phones",
+  "name": "Phone Pattern Extractor",
+  "version": "1.0.0",
+  "description": "Extract phone-number-like strings for manual review.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "phone",
+    "extract"
+  ]
+}

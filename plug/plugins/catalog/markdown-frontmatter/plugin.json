@@ -1,0 +1,16 @@
+{
+  "id": "markdown-frontmatter",
+  "name": "Markdown Front Matter Reader",
+  "version": "1.0.0",
+  "description": "Read simple key-value front matter without a YAML dependency.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "markdown",
+    "frontmatter",
+    "metadata"
+  ]
+}

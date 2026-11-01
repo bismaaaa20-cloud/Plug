@@ -1,0 +1,16 @@
+{
+  "id": "csv-validate",
+  "name": "CSV Schema Validator",
+  "version": "1.0.0",
+  "description": "Check required headers and missing values in CSV rows.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "validate",
+    "schema"
+  ]
+}
