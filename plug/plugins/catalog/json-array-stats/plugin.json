@@ -1,0 +1,16 @@
+{
+  "id": "json-array-stats",
+  "name": "JSON Array Statistics",
+  "version": "1.0.0",
+  "description": "Summarize item count and value types in a JSON array.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "array",
+    "statistics"
+  ]
+}

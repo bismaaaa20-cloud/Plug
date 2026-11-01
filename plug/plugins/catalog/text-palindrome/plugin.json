@@ -1,0 +1,15 @@
+{
+  "id": "text-palindrome",
+  "name": "Palindrome Checker",
+  "version": "1.0.0",
+  "description": "Check whether text is a palindrome after removing punctuation and spaces.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "palindrome"
+  ]
+}

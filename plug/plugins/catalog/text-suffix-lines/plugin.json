@@ -1,0 +1,16 @@
+{
+  "id": "text-suffix-lines",
+  "name": "Line Suffixer",
+  "version": "1.0.0",
+  "description": "Add a suffix to every non-empty text line.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "suffix",
+    "lines"
+  ]
+}

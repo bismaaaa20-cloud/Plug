@@ -1,0 +1,16 @@
+{
+  "id": "text-rot13",
+  "name": "ROT13 Encoder",
+  "version": "1.0.0",
+  "description": "Apply the reversible ROT13 text transform.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "rot13",
+    "cipher"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "text-number-lines",
+  "name": "Line Numberer",
+  "version": "1.0.0",
+  "description": "Prefix each line with a configurable line number.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "line numbers"
+  ]
+}

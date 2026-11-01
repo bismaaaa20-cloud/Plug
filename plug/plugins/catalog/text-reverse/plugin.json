@@ -1,0 +1,15 @@
+{
+  "id": "text-reverse",
+  "name": "Text Reverser",
+  "version": "1.0.0",
+  "description": "Reverse the character order of supplied text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "reverse"
+  ]
+}

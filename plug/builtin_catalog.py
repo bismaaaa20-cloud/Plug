@@ -1,4 +1,4 @@
-"""First-party Plug catalog: 50 plugins and 50 task-specific skills.
+"""First-party Plug catalog: 75 plugins and 75 task-specific skills.
 
 Run `python -m plug.builtin_catalog --install` to materialize the catalog under
 `plug/plugins/catalog` and `plug/skills/catalog`.
@@ -509,6 +509,166 @@ def _url_query_parse(a):
     parsed = parse_qs(query, keep_blank_values=True)
     return {"parameters": parsed, "keys": list(parsed)}
 
+def _text_reverse(a):
+    return {"text": str(a.get("text", ""))[::-1]}
+
+def _text_sentence_count(a):
+    text = str(a.get("text", "")).strip()
+    endings = re.findall(r"[.!?]+(?=\s|$)", text)
+    return {"sentences": len(endings), "endings": endings}
+
+def _text_char_frequency(a):
+    from collections import Counter
+    counts = Counter(str(a.get("text", "")))
+    return {"characters": [{"character": ch, "count": n} for ch, n in counts.most_common()],
+            "total": sum(counts.values())}
+
+def _text_remove_blank(a):
+    lines = str(a.get("text", "")).splitlines()
+    kept = [line for line in lines if line.strip()]
+    return {"text": "\n".join(kept), "removed": len(lines) - len(kept)}
+
+def _text_indent(a):
+    prefix = str(a.get("prefix", "    "))
+    lines = str(a.get("text", "")).splitlines()
+    return {"text": "\n".join((prefix + line if line or a.get("indent_blank", False) else line) for line in lines)}
+
+def _text_dedent(a):
+    import textwrap
+    return {"text": textwrap.dedent(str(a.get("text", "")))}
+
+def _text_number_lines(a):
+    start = int(a.get("start", 1))
+    width = max(1, len(str(start + len(str(a.get("text", "")).splitlines()))))
+    lines = str(a.get("text", "")).splitlines()
+    return {"text": "\n".join(f"{start + i:>{width}}: {line}" for i, line in enumerate(lines))}
+
+def _text_truncate(a):
+    text = str(a.get("text", ""))
+    limit = max(0, min(int(a.get("max_chars", 160)), 1000000))
+    suffix = str(a.get("suffix", "…"))
+    return {"text": text if len(text) <= limit else text[:limit] + suffix,
+            "truncated": len(text) > limit, "original_length": len(text)}
+
+def _text_prefix_lines(a):
+    prefix = str(a.get("prefix", ""))
+    lines = str(a.get("text", "")).splitlines()
+    return {"text": "\n".join(prefix + line if line else line for line in lines)}
+
+def _text_suffix_lines(a):
+    suffix = str(a.get("suffix", ""))
+    lines = str(a.get("text", "")).splitlines()
+    return {"text": "\n".join(line + suffix if line else line for line in lines)}
+
+def _text_unique_words(a):
+    words = re.findall(r"\b[\w']+\b", str(a.get("text", "")).casefold())
+    unique = list(dict.fromkeys(words))
+    return {"words": unique, "count": len(unique)}
+
+def _text_palindrome(a):
+    value = re.sub(r"[^a-z0-9]", "", str(a.get("text", "")).casefold())
+    return {"normalized": value, "palindrome": value == value[::-1]}
+
+def _text_rot13(a):
+    import codecs
+    return {"text": codecs.encode(str(a.get("text", "")), "rot_13")}
+
+def _json_keys(a):
+    obj = a.get("json", a.get("data", {}))
+    if isinstance(obj, str): obj = json.loads(obj)
+    if not isinstance(obj, dict): raise ValueError("input must be a JSON object")
+    return {"keys": list(obj.keys()), "count": len(obj)}
+
+def _json_values(a):
+    obj = a.get("json", a.get("data", {}))
+    if isinstance(obj, str): obj = json.loads(obj)
+    if not isinstance(obj, dict): raise ValueError("input must be a JSON object")
+    return {"values": list(obj.values()), "count": len(obj)}
+
+def _json_types(a):
+    obj = a.get("json", a.get("data", {}))
+    if isinstance(obj, str): obj = json.loads(obj)
+    if not isinstance(obj, dict): raise ValueError("input must be a JSON object")
+    def kind(v):
+        if v is None: return "null"
+        if isinstance(v, bool): return "boolean"
+        if isinstance(v, (int, float)): return "number"
+        if isinstance(v, str): return "string"
+        if isinstance(v, list): return "array"
+        return "object"
+    return {"types": {key: kind(value) for key, value in obj.items()}}
+
+def _json_array_stats(a):
+    items = a.get("json", a.get("items", []))
+    if isinstance(items, str): items = json.loads(items)
+    if not isinstance(items, list): raise ValueError("input must be a JSON array")
+    counts = {}
+    for item in items:
+        name = "null" if item is None else "boolean" if isinstance(item, bool) else "number" if isinstance(item, (int, float)) else "string" if isinstance(item, str) else "array" if isinstance(item, list) else "object"
+        counts[name] = counts.get(name, 0) + 1
+    return {"count": len(items), "type_counts": counts}
+
+def _json_sort_keys(a):
+    obj = a.get("json", a.get("data", {}))
+    if isinstance(obj, str): obj = json.loads(obj)
+    return {"json": json.dumps(obj, ensure_ascii=False, indent=int(a.get("indent", 2)), sort_keys=True)}
+
+def _json_minify(a):
+    obj = a.get("json", a.get("data", "null"))
+    if isinstance(obj, str): obj = json.loads(obj)
+    return {"json": json.dumps(obj, ensure_ascii=False, separators=(",", ":"))}
+
+def _csv_column_stats(a):
+    reader = csv.DictReader(io.StringIO(str(a.get("csv", ""))))
+    rows, column = list(reader), str(a.get("column", ""))
+    if column not in (reader.fieldnames or []): raise ValueError("column not found")
+    values = [row.get(column, "") or "" for row in rows]
+    filled = [value for value in values if value.strip()]
+    return {"column": column, "rows": len(rows), "filled": len(filled),
+            "blank": len(rows) - len(filled), "unique": len(set(filled))}
+
+def _csv_head(a):
+    reader = csv.DictReader(io.StringIO(str(a.get("csv", ""))))
+    fields, rows = reader.fieldnames or [], list(reader)
+    count = max(0, min(int(a.get("count", 5)), 10000))
+    output = io.StringIO()
+    if fields:
+        writer = csv.DictWriter(output, fieldnames=fields); writer.writeheader(); writer.writerows(rows[:count])
+    return {"csv": output.getvalue(), "returned": min(count, len(rows)), "total": len(rows)}
+
+def _csv_tail(a):
+    reader = csv.DictReader(io.StringIO(str(a.get("csv", ""))))
+    fields, rows = reader.fieldnames or [], list(reader)
+    count = max(0, min(int(a.get("count", 5)), 10000))
+    output = io.StringIO()
+    if fields:
+        writer = csv.DictWriter(output, fieldnames=fields); writer.writeheader(); writer.writerows(rows[-count:] if count else [])
+    return {"csv": output.getvalue(), "returned": min(count, len(rows)), "total": len(rows)}
+
+def _csv_transpose(a):
+    rows = list(csv.reader(io.StringIO(str(a.get("csv", "")))))
+    transposed = list(zip(*rows)) if rows else []
+    output = io.StringIO()
+    csv.writer(output).writerows(transposed)
+    return {"csv": output.getvalue(), "rows": len(transposed), "columns": len(transposed[0]) if transposed else 0}
+
+def _number_stats(a):
+    import statistics
+    values = [float(x) for x in a.get("values", [])]
+    if not values: raise ValueError("at least one number is required")
+    return {"count": len(values), "mean": statistics.fmean(values), "median": statistics.median(values),
+            "min": min(values), "max": max(values), "variance": statistics.pvariance(values)}
+
+def _number_percentile(a):
+    values = sorted(float(x) for x in a.get("values", []))
+    percentile = float(a.get("percentile", 50))
+    if not values: raise ValueError("at least one number is required")
+    if not 0 <= percentile <= 100: raise ValueError("percentile must be between 0 and 100")
+    position = (len(values) - 1) * percentile / 100
+    low, high = math.floor(position), math.ceil(position)
+    result = values[low] if low == high else values[low] + (values[high] - values[low]) * (position - low)
+    return {"percentile": percentile, "value": result}
+
 PLUGIN_DEFINITIONS = [
     ("text-stats", "Text Statistics", "Count characters, words and lines.", ("text", "count", "words"), _text_stats),
     ("text-clean", "Text Cleaner", "Trim and normalize whitespace.", ("text", "clean", "whitespace"), _text_clean),
@@ -560,6 +720,31 @@ PLUGIN_DEFINITIONS = [
     ("color-contrast", "Color Contrast Checker", "Calculate WCAG contrast ratio between two hexadecimal colors.", ["color","contrast","accessibility"], _color_contrast),
     ("web-fetch", "Public Web Page Reader", "Fetch public HTTP(S) page text; requires network.read and does not run JavaScript.", ["web","fetch","page","http"], _web_fetch),
     ("url-query-parse", "URL Query Parser", "Parse URL query parameters into a structured mapping.", ["url","query","parameters"], _url_query_parse),
+    ("text-reverse", "Text Reverser", "Reverse the character order of supplied text.", ["text","reverse"], _text_reverse),
+    ("text-sentence-count", "Sentence Counter", "Count sentence-ending punctuation marks in text.", ["text","sentence","count"], _text_sentence_count),
+    ("text-char-frequency", "Character Frequency", "Count each character and its frequency.", ["text","character","frequency"], _text_char_frequency),
+    ("text-remove-blank", "Blank Line Remover", "Remove empty or whitespace-only lines.", ["text","blank","lines"], _text_remove_blank),
+    ("text-indent", "Text Indenter", "Add a chosen indentation prefix to each line.", ["text","indent"], _text_indent),
+    ("text-dedent", "Text Dedenter", "Remove common leading indentation from text.", ["text","dedent","indent"], _text_dedent),
+    ("text-number-lines", "Line Numberer", "Prefix each line with a configurable line number.", ["text","line numbers"], _text_number_lines),
+    ("text-truncate", "Text Truncator", "Limit text length and append a configurable suffix.", ["text","truncate","shorten"], _text_truncate),
+    ("text-prefix-lines", "Line Prefixer", "Add a prefix to every non-empty text line.", ["text","prefix","lines"], _text_prefix_lines),
+    ("text-suffix-lines", "Line Suffixer", "Add a suffix to every non-empty text line.", ["text","suffix","lines"], _text_suffix_lines),
+    ("text-unique-words", "Unique Word Extractor", "Return unique words in first-seen order.", ["text","unique","words"], _text_unique_words),
+    ("text-palindrome", "Palindrome Checker", "Check whether text is a palindrome after removing punctuation and spaces.", ["text","palindrome"], _text_palindrome),
+    ("text-rot13", "ROT13 Encoder", "Apply the reversible ROT13 text transform.", ["text","rot13","cipher"], _text_rot13),
+    ("json-keys", "JSON Key Enumerator", "List keys from a JSON object at the top level.", ["json","keys","object"], _json_keys),
+    ("json-values", "JSON Value Enumerator", "Return values from a top-level JSON object.", ["json","values","object"], _json_values),
+    ("json-types", "JSON Type Inspector", "Report top-level JSON value types by key.", ["json","types","inspect"], _json_types),
+    ("json-array-stats", "JSON Array Statistics", "Summarize item count and value types in a JSON array.", ["json","array","statistics"], _json_array_stats),
+    ("json-sort-keys", "JSON Key Sorter", "Sort JSON object keys recursively and format the result.", ["json","sort","keys"], _json_sort_keys),
+    ("json-minify", "JSON Minifier", "Serialize valid JSON with compact separators.", ["json","minify","compact"], _json_minify),
+    ("csv-column-stats", "CSV Column Statistics", "Count unique, blank, and filled values in one CSV column.", ["csv","column","statistics"], _csv_column_stats),
+    ("csv-head", "CSV Head", "Return the first N data rows from CSV while preserving its header.", ["csv","head","preview"], _csv_head),
+    ("csv-tail", "CSV Tail", "Return the final N data rows from CSV while preserving its header.", ["csv","tail","preview"], _csv_tail),
+    ("csv-transpose", "CSV Transposer", "Transpose CSV rows and columns.", ["csv","transpose","matrix"], _csv_transpose),
+    ("number-stats", "Number Statistics", "Calculate count, mean, median, minimum, maximum, and population variance.", ["number","statistics","mean"], _number_stats),
+    ("number-percentile", "Percentile Calculator", "Calculate a linearly interpolated percentile for numeric input.", ["number","percentile","statistics"], _number_percentile),
 ]
 
 SKILL_DEFINITIONS = [
@@ -613,6 +798,31 @@ SKILL_DEFINITIONS = [
     ("deployment-readiness", "Assess whether an application is safe to release.", "deployment checklist, production readiness", "Review configuration, secrets, health checks, migrations, monitoring, backup, rollback, and security. Identify blocking gaps and assign verification steps. Never call a release ready when critical checks remain unknown."),
     ("observability", "Design logs, metrics, traces, and actionable alerts.", "observability, monitoring, logs, metrics", "Define service-level indicators and failure modes. Use structured logs without secrets, metrics with bounded cardinality, and traces across dependencies. Set alerts tied to user impact and document response playbooks."),
     ("documentation-review", "Audit documentation for correctness, completeness, and usability.", "review docs, audit README, docs quality", "Compare each claim against current implementation. Check prerequisites, examples, links, error cases, permissions, version assumptions, and limitations. Flag stale claims and offer corrected wording."),
+    ("ui-prototyping", "Create functional low- and high-fidelity UI prototypes.", "prototype UI, interactive mockup, wireframe", "Translate user goals into screens and navigation. Define component states and realistic sample data. Use clickable prototypes for flow validation and label non-functional controls. Review on mobile and desktop before implementation."),
+    ("dashboard-design", "Design dashboards that make key metrics and actions easy to scan.", "dashboard, admin panel, analytics UI", "Identify the user roles, decisions, and key performance indicators. Prioritize trends and exceptions over decorative charts. Define filters, date ranges, drill-downs, empty states, and responsive behavior."),
+    ("mobile-usability", "Evaluate and improve usability on phones and tablets.", "mobile usability, touch interface, phone UX", "Test primary tasks at common viewport sizes. Check touch targets, thumb reach, keyboard overlap, scrolling, orientation, load states, and readable text. Record concrete friction and fixes."),
+    ("web-accessibility-testing", "Test web interfaces using keyboard and assistive-technology principles.", "web accessibility test, WCAG check", "Navigate without a mouse, inspect focus order, labels, landmarks, headings, status announcements, and contrast. Use automated scanners as a supplement. Document reproducible failures and avoid claiming certification."),
+    ("web-fact-checking", "Verify factual claims found on websites.", "fact check website, verify claim online", "Break a claim into checkable parts. Search primary records and independent corroboration. Check publication and event dates, methodology, and context. State whether evidence supports, contradicts, or cannot resolve each part."),
+    ("video-edit-planning", "Create a practical video editing timeline and export plan.", "video edit plan, editing timeline, montage", "Review supplied footage or shot notes. Plan sequence, timestamps, cuts, pacing, transitions, captions, music cues, and aspect ratio. Specify export settings. Render only when a video editor is available."),
+    ("subtitle-review", "Review subtitles for timing, readability, and translation accuracy.", "subtitle review, SRT review, captions proofreading", "Check timing overlap, reading speed, line length, speaker attribution, punctuation, and terminology. Compare translated lines with source meaning. Mark uncertain audio rather than inventing corrections."),
+    ("animation-direction", "Specify motion principles and animation behavior for interfaces or video.", "animation design, motion graphics, transitions", "Define purpose, duration, easing, sequence, and reduced-motion behavior. Keep motion consistent with hierarchy and feedback. Avoid decorative movement that obscures content or harms accessibility."),
+    ("icon-design", "Create a coherent icon family for products and dashboards.", "icon set, UI icons, icon design", "Define a grid, stroke weight, corner language, optical alignment, and filled/outline variants. Check meaning at small sizes and contrast on all themes. Avoid copying proprietary icon artwork."),
+    ("design-critique", "Review visual designs and provide prioritized actionable feedback.", "design critique, review UI, visual feedback", "Evaluate hierarchy, alignment, spacing, typography, color, consistency, accessibility, and task fit. Separate objective defects from taste. Give prioritized fixes with examples and preserve the intended brand direction."),
+    ("ux-research", "Plan and synthesize user research to discover needs and friction.", "UX research, user interviews, research synthesis", "Set research questions and participant criteria. Use neutral interview prompts and informed consent. Synthesize observations into themes, evidence, and opportunity areas. Do not present a small sample as representative of all users."),
+    ("usability-testing", "Plan and analyze task-based usability tests.", "usability test, user testing, test session", "Write realistic tasks and success criteria. Avoid leading participants. Record completion, errors, time, and observations where consented. Separate usability findings from proposed solutions and prioritize by impact."),
+    ("information-architecture", "Organize content and navigation around user mental models.", "information architecture, navigation, sitemap", "Inventory content and user tasks. Group related topics, define labels, and test navigation with representative users. Produce a sitemap and menu hierarchy, noting governance and naming decisions."),
+    ("content-design", "Design helpful content for product journeys and complex tasks.", "content design, product content, user guidance", "Map user intent and information needs at each step. Write concise headings, instructions, validation, and next steps. Test comprehension, preserve terminology, and plan localization and accessibility."),
+    ("product-design", "Connect user needs, product constraints, and interface decisions.", "product design, feature design", "Clarify user problem, business outcome, and constraints. Map journeys, define success metrics, explore alternatives, and align UX, technical feasibility, and delivery. Document assumptions and trade-offs."),
+    ("data-engineering", "Design reliable data ingestion, transformation, and storage workflows.", "data engineering, ETL, ingestion pipeline", "Map sources, schema, volume, latency, and data sensitivity. Define idempotent ingestion, validation, retries, lineage, partitioning, and retention. Include monitoring and replay strategy."),
+    ("data-pipeline-design", "Build observable and fault-tolerant data pipeline plans.", "data pipeline, batch jobs, streaming", "Specify triggers, stages, schemas, checkpoints, late-arriving data, retries, and dead-letter handling. Define freshness and completeness metrics. Prefer reproducible transformations and safe backfills."),
+    ("database-optimization", "Improve database performance using measured workload evidence.", "database performance, index tuning", "Inspect query patterns, table sizes, indexes, and query plans. Measure baseline latency and throughput. Recommend indexes or schema changes with write-cost trade-offs. Verify on representative data."),
+    ("query-optimization", "Rewrite slow SQL queries without changing their meaning.", "SQL performance, optimize query", "Confirm dialect and expected results. Examine joins, filters, cardinality, indexes, and execution plan. Compare result equivalence and benchmark on representative data. Parameterize user-supplied values."),
+    ("data-quality-audit", "Audit datasets for completeness, validity, uniqueness, and consistency.", "data quality, data audit, anomalies", "Define domain rules and expected schema. Profile missing values, duplicates, outliers, referential integrity, and freshness. Quantify issues, preserve raw data, and propose validation gates."),
+    ("ml-experiment-design", "Plan reproducible machine-learning experiments.", "ML experiment, model training plan", "Define task, baseline, data splits, leakage risks, metrics, and hypothesis. Control random seeds and document configuration. Separate tuning data from final evaluation and report compute constraints."),
+    ("model-evaluation", "Evaluate model outputs against quality, safety, and reliability criteria.", "model evaluation, LLM eval, benchmark", "Define representative cases and rubrics before testing. Measure correctness, calibration, latency, cost, robustness, and safety where relevant. Report sample limitations and compare to a baseline."),
+    ("prompt-testing", "Systematically test prompts across normal and adversarial inputs.", "prompt evaluation, test prompts", "Create a balanced test set with edge cases and ambiguous requests. Define measurable rubric and expected outputs. Compare revisions using identical cases and track regressions. Do not optimize only for cherry-picked examples."),
+    ("support-triage", "Classify support requests and route urgent issues safely.", "support triage, ticket priority", "Identify impact, affected users, urgency, and reproducibility. Ask only essential questions. Route security, privacy, billing, or outage issues to the right owner. Never request passwords or secret tokens."),
+    ("release-notes", "Write accurate, user-facing release notes from merged changes.", "release notes, changelog writing", "Review merged commits and verified behavior. Group changes into added, improved, fixed, and known issues. Explain user impact in plain language and omit speculative or unshipped work."),
 ]
 
 def run_builtin(context, arguments):
@@ -628,7 +838,7 @@ def run_builtin(context, arguments):
 
 
 def install_builtin_catalog(plugin_root=None, skill_root=None):
-    """Materialize all 50 plugins and 50 skills; never overwrite existing files."""
+    """Materialize all 75 plugins and 75 skills; never overwrite existing files."""
     import json as _json
     from pathlib import Path as _Path
     base = _Path(__file__).resolve().parent
@@ -677,7 +887,7 @@ def install_builtin_catalog(plugin_root=None, skill_root=None):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Install Plug's 50 built-in plugins and 50 skills.")
+    parser = argparse.ArgumentParser(description="Install Plug's 75 built-in plugins and 75 skills.")
     parser.add_argument("--install", action="store_true", help="materialize the bundled catalog")
     args = parser.parse_args()
     if args.install:

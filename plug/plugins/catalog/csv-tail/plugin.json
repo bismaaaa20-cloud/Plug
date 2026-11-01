@@ -1,0 +1,16 @@
+{
+  "id": "csv-tail",
+  "name": "CSV Tail",
+  "version": "1.0.0",
+  "description": "Return the final N data rows from CSV while preserving its header.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "tail",
+    "preview"
+  ]
+}

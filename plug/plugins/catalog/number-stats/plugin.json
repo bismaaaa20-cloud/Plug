@@ -1,0 +1,16 @@
+{
+  "id": "number-stats",
+  "name": "Number Statistics",
+  "version": "1.0.0",
+  "description": "Calculate count, mean, median, minimum, maximum, and population variance.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "number",
+    "statistics",
+    "mean"
+  ]
+}

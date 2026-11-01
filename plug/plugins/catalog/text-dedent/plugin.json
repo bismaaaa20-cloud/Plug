@@ -1,0 +1,16 @@
+{
+  "id": "text-dedent",
+  "name": "Text Dedenter",
+  "version": "1.0.0",
+  "description": "Remove common leading indentation from text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "dedent",
+    "indent"
+  ]
+}

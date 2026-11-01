@@ -1,0 +1,16 @@
+{
+  "id": "csv-column-stats",
+  "name": "CSV Column Statistics",
+  "version": "1.0.0",
+  "description": "Count unique, blank, and filled values in one CSV column.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "column",
+    "statistics"
+  ]
+}

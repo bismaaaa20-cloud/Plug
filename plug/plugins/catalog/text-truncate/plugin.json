@@ -1,0 +1,16 @@
+{
+  "id": "text-truncate",
+  "name": "Text Truncator",
+  "version": "1.0.0",
+  "description": "Limit text length and append a configurable suffix.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "truncate",
+    "shorten"
+  ]
+}

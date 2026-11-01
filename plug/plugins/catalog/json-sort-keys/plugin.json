@@ -1,0 +1,16 @@
+{
+  "id": "json-sort-keys",
+  "name": "JSON Key Sorter",
+  "version": "1.0.0",
+  "description": "Sort JSON object keys recursively and format the result.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "sort",
+    "keys"
+  ]
+}

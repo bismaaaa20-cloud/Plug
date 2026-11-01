@@ -1,8 +1,8 @@
-# Built-in catalog: 50 plugins + 50 skills
+# Built-in catalog: 75 plugins + 75 skills
 
 Plug includes a first-party catalog definition in `plug/builtin_catalog.py`.
-It uses only the Python standard library and contains exactly 50 plugin
-implementations and 50 task skills.
+It uses only the Python standard library and contains exactly 75 plugin
+implementations and 75 task skills.
 
 ## Install the catalog
 
@@ -15,9 +15,9 @@ python -m plug.builtin_catalog --install
 This creates:
 
 - `plug/plugins/catalog/<plugin-id>/plugin.json` and `plugin.py` for each of
-  the 50 plugins.
+  the 75 plugins.
 - `plug/skills/catalog/<skill-id>/SKILL.md` and `scripts/main.py` for each of
-  the 50 skills.
+  the 75 skills.
 
 The installer refuses to overwrite existing item folders. If installation
 stops because a folder already exists, inspect that folder rather than deleting
@@ -77,6 +77,31 @@ or overwriting it.
 | color-contrast | Calculate WCAG contrast ratio between two hexadecimal colors. |
 | web-fetch | Fetch public HTTP(S) page text; requires network.read and does not run JavaScript. |
 | url-query-parse | Parse URL query parameters into a structured mapping. |
+| text-reverse | Reverse the character order of supplied text. |
+| text-sentence-count | Count sentence-ending punctuation marks in text. |
+| text-char-frequency | Count each character and its frequency. |
+| text-remove-blank | Remove empty or whitespace-only lines. |
+| text-indent | Add a chosen indentation prefix to each line. |
+| text-dedent | Remove common leading indentation from text. |
+| text-number-lines | Prefix each line with a configurable line number. |
+| text-truncate | Limit text length and append a configurable suffix. |
+| text-prefix-lines | Add a prefix to every non-empty text line. |
+| text-suffix-lines | Add a suffix to every non-empty text line. |
+| text-unique-words | Return unique words in first-seen order. |
+| text-palindrome | Check whether text is a palindrome after removing punctuation and spaces. |
+| text-rot13 | Apply the reversible ROT13 text transform. |
+| json-keys | List keys from a JSON object at the top level. |
+| json-values | Return values from a top-level JSON object. |
+| json-types | Report top-level JSON value types by key. |
+| json-array-stats | Summarize item count and value types in a JSON array. |
+| json-sort-keys | Sort JSON object keys recursively and format the result. |
+| json-minify | Serialize valid JSON with compact separators. |
+| csv-column-stats | Count unique, blank, and filled values in one CSV column. |
+| csv-head | Return the first N data rows from CSV while preserving its header. |
+| csv-tail | Return the final N data rows from CSV while preserving its header. |
+| csv-transpose | Transpose CSV rows and columns. |
+| number-stats | Calculate count, mean, median, minimum, maximum, and population variance. |
+| number-percentile | Calculate a linearly interpolated percentile for numeric input. |
 
 File plugins require explicit `filesystem.read` or `filesystem.write`
 permissions through the existing registry. They are local filesystem tools;
@@ -98,7 +123,7 @@ an LLM semantic router.
 
 Additional task skills: ui-builder, web-research, video-analysis, image-creation, audio-transcription, frontend-development, backend-development, browser-automation, accessibility-audit, data-visualization.
 
-Additional skills: web-page-reading, video-storyboard, video-captioning, audio-analysis, audio-cleanup, ux-writing, component-library, mobile-ui-design, design-system, prompt-engineering, test-automation, ci-cd, deployment-readiness, observability, documentation-review.
+Additional skills: ui-prototyping, dashboard-design, mobile-usability, web-accessibility-testing, web-fact-checking, video-edit-planning, subtitle-review, animation-direction, icon-design, design-critique, ux-research, usability-testing, information-architecture, content-design, product-design, data-engineering, data-pipeline-design, database-optimization, query-optimization, data-quality-audit, ml-experiment-design, model-evaluation, prompt-testing, support-triage, release-notes, web-page-reading, video-storyboard, video-captioning, audio-analysis, audio-cleanup, ux-writing, component-library, mobile-ui-design, design-system, prompt-engineering, test-automation, ci-cd, deployment-readiness, observability, documentation-review.
 
 ## Verify
 
@@ -113,7 +138,7 @@ plugin handler, safe calculator behavior, and overwrite protection.
 
 `web-fetch` requires the explicit `network.read` permission. It accepts public HTTP(S) URLs on standard ports, blocks non-public resolved addresses and validates redirect destinations, supports text responses only, and caps the response body at 1 MB. It does not run JavaScript or automate authenticated browser sessions.
 
-All 50 plugins are local standard-library operations. No cloud account, API
+All 75 plugins are local standard-library operations. No cloud account, API
 key, network access, or MCP server is required. The ZIP inspector lists entries
 but does not extract them. URL parsing does not make requests. File access is
 permission-gated, but plugins execute as trusted in-process Python and are not

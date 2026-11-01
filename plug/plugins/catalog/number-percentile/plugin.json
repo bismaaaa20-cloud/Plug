@@ -1,0 +1,16 @@
+{
+  "id": "number-percentile",
+  "name": "Percentile Calculator",
+  "version": "1.0.0",
+  "description": "Calculate a linearly interpolated percentile for numeric input.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "number",
+    "percentile",
+    "statistics"
+  ]
+}

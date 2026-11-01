@@ -1,0 +1,15 @@
+{
+  "id": "text-indent",
+  "name": "Text Indenter",
+  "version": "1.0.0",
+  "description": "Add a chosen indentation prefix to each line.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "indent"
+  ]
+}

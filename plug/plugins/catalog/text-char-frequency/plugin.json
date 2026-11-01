@@ -1,0 +1,16 @@
+{
+  "id": "text-char-frequency",
+  "name": "Character Frequency",
+  "version": "1.0.0",
+  "description": "Count each character and its frequency.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "character",
+    "frequency"
+  ]
+}

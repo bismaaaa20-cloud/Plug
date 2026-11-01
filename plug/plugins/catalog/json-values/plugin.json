@@ -1,0 +1,16 @@
+{
+  "id": "json-values",
+  "name": "JSON Value Enumerator",
+  "version": "1.0.0",
+  "description": "Return values from a top-level JSON object.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "values",
+    "object"
+  ]
+}

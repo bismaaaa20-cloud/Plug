@@ -1,0 +1,16 @@
+{
+  "id": "text-remove-blank",
+  "name": "Blank Line Remover",
+  "version": "1.0.0",
+  "description": "Remove empty or whitespace-only lines.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "blank",
+    "lines"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "json-keys",
+  "name": "JSON Key Enumerator",
+  "version": "1.0.0",
+  "description": "List keys from a JSON object at the top level.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "keys",
+    "object"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "json-minify",
+  "name": "JSON Minifier",
+  "version": "1.0.0",
+  "description": "Serialize valid JSON with compact separators.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "minify",
+    "compact"
+  ]
+}

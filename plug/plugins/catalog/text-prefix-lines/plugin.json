@@ -1,0 +1,16 @@
+{
+  "id": "text-prefix-lines",
+  "name": "Line Prefixer",
+  "version": "1.0.0",
+  "description": "Add a prefix to every non-empty text line.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "prefix",
+    "lines"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "text-unique-words",
+  "name": "Unique Word Extractor",
+  "version": "1.0.0",
+  "description": "Return unique words in first-seen order.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "unique",
+    "words"
+  ]
+}

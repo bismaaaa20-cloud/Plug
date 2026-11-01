@@ -1,0 +1,16 @@
+{
+  "id": "text-sentence-count",
+  "name": "Sentence Counter",
+  "version": "1.0.0",
+  "description": "Count sentence-ending punctuation marks in text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "sentence",
+    "count"
+  ]
+}

@@ -38,10 +38,10 @@ python -m unittest discover -s tests -v
 No API key is needed to use the planning and allocation core. Any future
 integration must document its connection method and permissions explicitly.
 
-## Built-in catalog (50 plugins + 50 skills)
+## Built-in catalog (75 plugins + 75 skills)
 
-The repository now contains 50 local plugin packages under
-`plug/plugins/catalog/` and 50 skill packages under
+The repository now contains 75 local plugin packages under
+`plug/plugins/catalog/` and 75 skill packages under
 `plug/skills/catalog/`. Each plugin has a manifest and executable entrypoint;
 each skill has a `SKILL.md` and helper script. See
 [Built-in catalog documentation](docs/BUILTIN-CATALOG.md).

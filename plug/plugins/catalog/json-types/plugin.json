@@ -1,0 +1,16 @@
+{
+  "id": "json-types",
+  "name": "JSON Type Inspector",
+  "version": "1.0.0",
+  "description": "Report top-level JSON value types by key.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "types",
+    "inspect"
+  ]
+}
