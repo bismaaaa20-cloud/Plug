@@ -1,0 +1,16 @@
+{
+  "id": "html-table-extract",
+  "name": "HTML Table Extractor",
+  "version": "1.0.0",
+  "description": "Extract rows and cell text from HTML tables.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "html",
+    "table",
+    "extract"
+  ]
+}

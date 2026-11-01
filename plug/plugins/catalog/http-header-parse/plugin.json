@@ -1,0 +1,16 @@
+{
+  "id": "http-header-parse",
+  "name": "HTTP Header Parser",
+  "version": "1.0.0",
+  "description": "Parse raw HTTP header lines into a normalized mapping.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "http",
+    "headers",
+    "parse"
+  ]
+}

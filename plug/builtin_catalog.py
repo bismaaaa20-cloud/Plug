@@ -1,4 +1,4 @@
-"""First-party Plug catalog: 150 plugins and 150 task-specific skills.
+"""First-party Plug catalog: 175 plugins and 175 task-specific skills.
 
 Run `python -m plug.builtin_catalog --install` to materialize the catalog under
 `plug/plugins/catalog` and `plug/skills/catalog`.
@@ -1201,6 +1201,247 @@ def _make_dev_extension_handler(task):
     return handler
 
 
+def _run_data_extension(task, a, context):
+    if task == "json-path-set":
+        import copy
+        value = a.get("json", a.get("data"))
+        if isinstance(value, str): value = json.loads(value)
+        if not isinstance(value, dict): raise ValueError("input must be a JSON object")
+        result = copy.deepcopy(value)
+        keys = [part for part in str(a.get("path", "")).split(".") if part]
+        if not keys: raise ValueError("path is required")
+        current = result
+        for key in keys[:-1]:
+            if key not in current or not isinstance(current[key], dict): raise ValueError("intermediate path must exist")
+            current = current[key]
+        current[keys[-1]] = a.get("value")
+        return {"data": result}
+    if task == "json-to-xml":
+        value = a.get("json", a.get("data"))
+        if isinstance(value, str): value = json.loads(value)
+        def add(parent, name, item):
+            node = ET.SubElement(parent, str(name))
+            if isinstance(item, dict):
+                for key, child in item.items(): add(node, key, child)
+            elif isinstance(item, list):
+                for child in item: add(node, "item", child)
+            elif item is not None:
+                node.text = str(item).lower() if isinstance(item, bool) else str(item)
+        root = ET.Element("root")
+        if isinstance(value, dict):
+            for key, item in value.items(): add(root, key, item)
+        else: add(root, "item", value)
+        return {"xml": ET.tostring(root, encoding="unicode")}
+    if task == "xml-to-json":
+        root = ET.fromstring(str(a.get("xml", "")))
+        def convert(node):
+            if not list(node): return node.text or ""
+            result = {}
+            for child in list(node):
+                value = convert(child)
+                if child.tag in result:
+                    if not isinstance(result[child.tag], list): result[child.tag] = [result[child.tag]]
+                    result[child.tag].append(value)
+                else: result[child.tag] = value
+            return result
+        return {"root": root.tag, "data": convert(root)}
+    if task == "html-heading-outline":
+        source = str(a.get("html", ""))
+        items = []
+        for match in re.finditer(r"(?is)<h([1-6])\b[^>]*>(.*?)</h\1>", source):
+            text = re.sub(r"(?s)<[^>]+>", " ", match.group(2))
+            items.append({"level": int(match.group(1)), "text": re.sub(r"\s+", " ", html.unescape(text)).strip()})
+        return {"headings": items, "count": len(items)}
+    if task == "html-image-extract":
+        images = []
+        for tag in re.findall(r"(?is)<img\b[^>]*>", str(a.get("html", ""))):
+            src = re.search(r"(?i)\bsrc\s*=\s*['\"]([^'\"]*)", tag)
+            alt = re.search(r"(?i)\balt\s*=\s*['\"]([^'\"]*)", tag)
+            images.append({"src": html.unescape(src.group(1)) if src else "", "alt": html.unescape(alt.group(1)) if alt else ""})
+        return {"images": images, "count": len(images)}
+    if task == "http-header-parse":
+        headers = {}
+        for line in str(a.get("text", "")).splitlines():
+            if ":" in line:
+                key, value = line.split(":", 1)
+                headers.setdefault(key.strip().lower(), []).append(value.strip())
+        return {"headers": headers, "count": len(headers)}
+    if task == "url-build":
+        from urllib.parse import urlencode, urlsplit, urlunsplit
+        parts = urlsplit(str(a.get("base_url", "")))
+        params = a.get("params", {})
+        if not isinstance(params, dict): raise ValueError("params must be an object")
+        return {"url": urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(params, doseq=True), parts.fragment))}
+    if task == "email-validate":
+        email = str(a.get("email", "")).strip()
+        valid = bool(re.fullmatch(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", email))
+        return {"email": email, "valid_format": valid, "note": "Mailbox existence is not verified."}
+    if task == "phone-normalize":
+        value = str(a.get("phone", ""))
+        digits = re.sub(r"\D", "", value)
+        return {"normalized": ("+" if value.strip().startswith("+") else "") + digits, "digit_count": len(digits)}
+    if task == "password-strength":
+        value = str(a.get("password", ""))
+        groups = sum(bool(re.search(pattern, value)) for pattern in [r"[a-z]", r"[A-Z]", r"\d", r"[^A-Za-z0-9]"])
+        score = min(4, int(len(value) >= 8) + int(len(value) >= 12) + int(len(value) >= 16) + int(groups >= 3))
+        return {"score": score, "label": ["very weak","weak","fair","strong","very strong"][score],
+                "length": len(value), "note": "Heuristic only; password is not stored."}
+    if task == "random-string":
+        import secrets, string
+        length = max(1, min(int(a.get("length", 16)), 256))
+        alphabet = str(a.get("alphabet", string.ascii_letters + string.digits))
+        if len(set(alphabet)) < 2: raise ValueError("alphabet needs at least two distinct characters")
+        return {"value": "".join(secrets.choice(alphabet) for _ in range(length)), "length": length}
+    if task == "lorem-generate":
+        words = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua".split()
+        count = max(1, min(int(a.get("words", 50)), 2000))
+        text = " ".join(words[index % len(words)] for index in range(count))
+        paragraphs = max(1, min(int(a.get("paragraphs", 1)), 20))
+        result = []
+        for index in range(paragraphs):
+            chunk = " ".join(text.split()[index::paragraphs]) if paragraphs > 1 else text
+            result.append(chunk[:1].upper() + chunk[1:] + ".")
+        return {"text": "\n\n".join(result), "paragraphs": paragraphs}
+    if task == "uuid-parse":
+        value = uuid.UUID(str(a.get("uuid", "")))
+        return {"canonical": str(value), "version": value.version, "variant": value.variant}
+    if task == "timestamp-convert":
+        value = a.get("value")
+        if isinstance(value, (int, float)):
+            moment = datetime.fromtimestamp(float(value), tz=timezone.utc)
+        else:
+            moment = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            if moment.tzinfo is None: moment = moment.replace(tzinfo=timezone.utc)
+        return {"unix": moment.timestamp(), "utc": moment.astimezone(timezone.utc).isoformat()}
+    if task == "timezone-convert":
+        from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+        moment = datetime.fromisoformat(str(a.get("value", "")).replace("Z", "+00:00"))
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=ZoneInfo(str(a.get("from_zone", "UTC"))))
+        try: converted = moment.astimezone(ZoneInfo(str(a.get("to_zone", "UTC"))))
+        except ZoneInfoNotFoundError as exc: raise ValueError("unknown timezone") from exc
+        return {"source": moment.isoformat(), "converted": converted.isoformat()}
+    if task == "file-find":
+        context.require("filesystem.read")
+        root = Path(str(a.get("path", "."))).expanduser().resolve()
+        if not root.is_dir(): raise ValueError("path is not a directory")
+        pattern = str(a.get("pattern", "*"))
+        limit = max(1, min(int(a.get("limit", 100)), 2000))
+        found = [p for p in (root.rglob(pattern) if a.get("recursive") else root.glob(pattern)) if not p.is_symlink()]
+        return {"matches": [{"path": str(p), "is_dir": p.is_dir(), "size": p.stat().st_size if p.is_file() else None} for p in found[:limit]],
+                "count": min(len(found), limit), "truncated": len(found) > limit}
+    if task == "file-text-search":
+        context.require("filesystem.read")
+        root = Path(str(a.get("path", "."))).expanduser().resolve()
+        needle = str(a.get("query", ""))
+        if not root.is_dir() or not needle: raise ValueError("directory and query are required")
+        hits = []
+        scanned = 0
+        for path in root.rglob("*"):
+            if not path.is_file() or path.is_symlink() or path.stat().st_size > 1000000: continue
+            scanned += 1
+            try: lines = path.read_text(encoding="utf-8").splitlines()
+            except (UnicodeDecodeError, OSError): continue
+            for number, line in enumerate(lines, 1):
+                if needle.casefold() in line.casefold(): hits.append({"path": str(path), "line": number, "text": line[:500]})
+            if scanned >= max(1, min(int(a.get("max_files", 1000)), 5000)): break
+        return {"matches": hits[:500], "count": min(len(hits), 500), "files_scanned": scanned}
+    if task == "duplicate-files":
+        context.require("filesystem.read")
+        root = Path(str(a.get("path", "."))).expanduser().resolve()
+        if not root.is_dir(): raise ValueError("path is not a directory")
+        groups, scanned = {}, 0
+        for path in root.rglob("*"):
+            if path.is_file() and not path.is_symlink():
+                groups.setdefault(path.stat().st_size, []).append(path)
+                scanned += 1
+                if scanned >= max(1, min(int(a.get("max_files", 2000)), 10000)): break
+        duplicates = []
+        for size, paths in groups.items():
+            if len(paths) < 2: continue
+            by_hash = {}
+            for path in paths:
+                digest = hashlib.sha256(path.read_bytes()).hexdigest()
+                by_hash.setdefault(digest, []).append(str(path))
+            for digest, names in by_hash.items():
+                if len(names) > 1: duplicates.append({"sha256": digest, "size": size, "paths": names})
+        return {"groups": duplicates, "files_scanned": scanned}
+    if task == "directory-tree":
+        context.require("filesystem.read")
+        root = Path(str(a.get("path", "."))).expanduser().resolve()
+        if not root.is_dir(): raise ValueError("path is not a directory")
+        max_depth = max(0, min(int(a.get("max_depth", 3)), 10))
+        limit = max(1, min(int(a.get("max_entries", 300)), 2000))
+        entries = []
+        def walk(folder, depth):
+            if depth > max_depth or len(entries) >= limit: return
+            children = sorted(folder.iterdir(), key=lambda item: (not item.is_dir(), item.name.casefold()))
+            for child in children:
+                if child.is_symlink() or len(entries) >= limit: continue
+                entries.append({"path": str(child.relative_to(root)), "directory": child.is_dir(), "depth": depth})
+                if child.is_dir(): walk(child, depth + 1)
+        walk(root, 0)
+        return {"root": str(root), "entries": entries, "truncated": len(entries) >= limit}
+    if task == "file-extension-count":
+        context.require("filesystem.read")
+        root = Path(str(a.get("path", "."))).expanduser().resolve()
+        if not root.is_dir(): raise ValueError("path is not a directory")
+        counts = {}
+        for path in root.rglob("*"):
+            if path.is_file() and not path.is_symlink():
+                suffix = path.suffix.lower() or "[no extension]"
+                counts[suffix] = counts.get(suffix, 0) + 1
+        return {"extensions": counts, "files": sum(counts.values())}
+    if task == "xml-attrs-extract":
+        root = ET.fromstring(str(a.get("xml", "")))
+        values = [{"tag": node.tag, "attributes": dict(node.attrib)} for node in root.iter() if node.attrib]
+        return {"elements": values, "count": len(values)}
+    if task == "css-colors-extract":
+        values = re.findall(r"#[0-9a-fA-F]{3,8}\b", str(a.get("css", "")))
+        values = list(dict.fromkeys(values))
+        return {"colors": values, "count": len(values)}
+    if task == "css-rule-count":
+        source = re.sub(r"/\*.*?\*/", "", str(a.get("css", "")), flags=re.S)
+        rules = re.findall(r"([^{}]+)\{([^{}]*)\}", source)
+        selectors = [selector.strip() for selector, body in rules if selector.strip()]
+        count = sum(len([part for part in body.split(";") if ":" in part]) for selector, body in rules)
+        return {"rules": len(selectors), "selectors": selectors, "declarations": count}
+    if task == "html-form-inspect":
+        source = str(a.get("html", ""))
+        forms = []
+        for attrs, body in re.findall(r"(?is)<form\b([^>]*)>(.*?)</form>", source):
+            action = re.search(r"(?i)\baction\s*=\s*['\"]([^'\"]*)", attrs)
+            method = re.search(r"(?i)\bmethod\s*=\s*['\"]([^'\"]*)", attrs)
+            fields = []
+            for tag in re.findall(r"(?is)<(?:input|select|textarea)\b[^>]*>", body):
+                name = re.search(r"(?i)\bname\s*=\s*['\"]([^'\"]*)", tag)
+                kind = re.search(r"(?i)\btype\s*=\s*['\"]([^'\"]*)", tag)
+                if name: fields.append({"name": name.group(1), "type": kind.group(1) if kind else "text"})
+            forms.append({"action": action.group(1) if action else "",
+                          "method": method.group(1).upper() if method else "GET", "fields": fields})
+        return {"forms": forms, "count": len(forms)}
+    if task == "html-table-extract":
+        source = str(a.get("html", ""))
+        tables = []
+        for table in re.findall(r"(?is)<table\b[^>]*>(.*?)</table>", source):
+            rows = []
+            for row in re.findall(r"(?is)<tr\b[^>]*>(.*?)</tr>", table):
+                cells = []
+                for cell in re.findall(r"(?is)<t[dh]\b[^>]*>(.*?)</t[dh]>", row):
+                    text = re.sub(r"(?s)<[^>]+>", " ", cell)
+                    cells.append(re.sub(r"\s+", " ", html.unescape(text)).strip())
+                if cells: rows.append(cells)
+            tables.append(rows)
+        return {"tables": tables, "count": len(tables)}
+    raise KeyError("unknown data extension task: " + task)
+
+
+def _make_data_extension_handler(task):
+    def handler(arguments, context=None):
+        return _run_data_extension(task, arguments, context)
+    return handler
+
+
 PLUGIN_DEFINITIONS = [
     ("text-stats", "Text Statistics", "Count characters, words and lines.", ("text", "count", "words"), _text_stats),
     ("text-clean", "Text Cleaner", "Trim and normalize whitespace.", ("text", "clean", "whitespace"), _text_clean),
@@ -1352,6 +1593,31 @@ PLUGIN_DEFINITIONS = [
     ("path-extension", "Path Extension Inspector", "Return basename, stem, and lowercase suffix for a path.", ["path","extension","filename"], _make_dev_extension_handler("path-extension")),
     ("code-fence-extract", "Markdown Code Fence Extractor", "Extract fenced code blocks and language labels.", ["markdown","code fence","extract"], _make_dev_extension_handler("code-fence-extract")),
     ("markdown-word-count", "Markdown Word Counter", "Count words in Markdown after removing heading markers.", ["markdown","word count","text"], _make_dev_extension_handler("markdown-word-count")),
+    ("json-path-set", "JSON Path Setter", "Set a value at a dotted path in a JSON object copy.", ["json","path","set"], _make_data_extension_handler("json-path-set")),
+    ("json-to-xml", "JSON to XML", "Convert JSON objects and arrays into simple XML elements.", ["json","xml","convert"], _make_data_extension_handler("json-to-xml")),
+    ("xml-to-json", "XML to JSON", "Convert XML text structure into JSON.", ["xml","json","convert"], _make_data_extension_handler("xml-to-json")),
+    ("html-heading-outline", "HTML Heading Outline", "Extract heading levels and visible heading text from HTML.", ["html","heading","outline"], _make_data_extension_handler("html-heading-outline")),
+    ("html-image-extract", "HTML Image Extractor", "Extract image source and alternative text from HTML.", ["html","image","alt"], _make_data_extension_handler("html-image-extract")),
+    ("http-header-parse", "HTTP Header Parser", "Parse raw HTTP header lines into a normalized mapping.", ["http","headers","parse"], _make_data_extension_handler("http-header-parse")),
+    ("url-build", "URL Builder", "Build a URL from a base address and query parameters.", ["url","build","query"], _make_data_extension_handler("url-build")),
+    ("email-validate", "Email Format Checker", "Check basic email syntax without verifying mailbox existence.", ["email","validate","format"], _make_data_extension_handler("email-validate")),
+    ("phone-normalize", "Phone Normalizer", "Normalize phone-like text to digits and an optional leading plus.", ["phone","normalize","digits"], _make_data_extension_handler("phone-normalize")),
+    ("password-strength", "Password Strength Heuristic", "Estimate password length and character-class variety without storing it.", ["password","strength","security"], _make_data_extension_handler("password-strength")),
+    ("random-string", "Random String Generator", "Generate a random string using Python secrets.", ["random","string","generate"], _make_data_extension_handler("random-string")),
+    ("lorem-generate", "Lorem Ipsum Generator", "Generate placeholder paragraphs for layout and typography testing.", ["lorem","placeholder","text"], _make_data_extension_handler("lorem-generate")),
+    ("uuid-parse", "UUID Inspector", "Validate a UUID and return its canonical form and variant.", ["uuid","parse","inspect"], _make_data_extension_handler("uuid-parse")),
+    ("timestamp-convert", "Timestamp Converter", "Convert between Unix timestamps and ISO date-times.", ["timestamp","unix","datetime"], _make_data_extension_handler("timestamp-convert")),
+    ("timezone-convert", "Timezone Converter", "Convert ISO date-times into a requested IANA timezone.", ["timezone","convert","datetime"], _make_data_extension_handler("timezone-convert")),
+    ("file-find", "File Finder", "Find files or directories by glob pattern; requires filesystem.read.", ["file","find","glob"], _make_data_extension_handler("file-find")),
+    ("file-text-search", "File Text Search", "Search UTF-8 text files for a phrase; requires filesystem.read.", ["file","search","text"], _make_data_extension_handler("file-text-search")),
+    ("duplicate-files", "Duplicate File Finder", "Group duplicate files by size and SHA-256; requires filesystem.read.", ["file","duplicate","checksum"], _make_data_extension_handler("duplicate-files")),
+    ("directory-tree", "Directory Tree", "Create a bounded directory tree listing; requires filesystem.read.", ["directory","tree","folder"], _make_data_extension_handler("directory-tree")),
+    ("file-extension-count", "File Extension Counter", "Count file extensions in a directory tree; requires filesystem.read.", ["file","extension","count"], _make_data_extension_handler("file-extension-count")),
+    ("xml-attrs-extract", "XML Attribute Extractor", "Extract XML element attributes into structured records.", ["xml","attributes","extract"], _make_data_extension_handler("xml-attrs-extract")),
+    ("css-colors-extract", "CSS Color Extractor", "Extract unique hexadecimal color literals from CSS.", ["css","color","extract"], _make_data_extension_handler("css-colors-extract")),
+    ("css-rule-count", "CSS Rule Counter", "Count CSS selectors and declarations while ignoring block comments.", ["css","rules","count"], _make_data_extension_handler("css-rule-count")),
+    ("html-form-inspect", "HTML Form Inspector", "Inspect form actions, methods, and named input fields.", ["html","form","inspect"], _make_data_extension_handler("html-form-inspect")),
+    ("html-table-extract", "HTML Table Extractor", "Extract rows and cell text from HTML tables.", ["html","table","extract"], _make_data_extension_handler("html-table-extract")),
 ]
 
 SKILL_DEFINITIONS = [
@@ -1505,6 +1771,31 @@ SKILL_DEFINITIONS = [
     ("survey-design", "Create neutral surveys with clear response scales.", "survey questions, questionnaire design", "Clarify research objective and population. Use neutral wording, one concept per question, balanced options, and appropriate scales. Minimize sensitive data and plan analysis before fielding."),
     ("pricing-research", "Research willingness to pay and pricing perceptions.", "pricing research, willingness to pay", "Define segments and value metric. Choose interviews, survey, or behavioral evidence. Avoid leading questions and explain sampling limits. Compare willingness-to-pay evidence with costs and alternatives."),
     ("product-analytics", "Define product metrics and interpret user behavior.", "product analytics, funnel metrics", "Map product goals to activation, engagement, retention, and guardrail metrics. Define event names and properties consistently. Check instrumentation, cohort definitions, privacy, and confounding factors."),
+    ("technical-support", "Diagnose technical issues with clear, safe troubleshooting steps.", "technical support, troubleshoot device, technical problem", "Confirm symptoms, environment, recent changes, and impact. Give reversible checks first, preserve evidence, and avoid requesting passwords or secret tokens. Escalate destructive or account-specific actions to an authorized operator."),
+    ("help-center-design", "Organize a searchable self-service help center.", "help center, FAQ site, knowledge articles", "Group articles around user tasks and vocabulary. Define templates, categories, search terms, ownership, update cadence, and escalation. Keep article steps tested against the current product."),
+    ("knowledge-management", "Create a maintainable system for capturing and reusing team knowledge.", "knowledge management, internal wiki", "Define content types, metadata, owners, review dates, and access rules. Capture decisions and procedures close to their source. Remove duplicates and mark stale or uncertain information."),
+    ("technical-support-playbooks", "Create repeatable support guides for common technical issues.", "support playbook, troubleshooting guide", "For each issue define symptoms, impact, diagnostic questions, safe steps, expected result, rollback, and escalation. Use tested instructions and state when a fix requires elevated permissions."),
+    ("ecommerce-operations", "Plan and improve day-to-day ecommerce workflows.", "ecommerce operations, online store process", "Map catalog, inventory, checkout, fulfillment, refunds, and customer support. Identify handoffs and failure states. Track order accuracy, delivery, cancellations, and returns using verified data."),
+    ("product-catalog-management", "Maintain accurate and consistent product catalog records.", "product catalog, SKU management", "Define required attributes, identifiers, variants, taxonomy, images, pricing source, and lifecycle status. Validate completeness and duplicate SKUs. Keep source-of-truth rules explicit."),
+    ("inventory-analysis", "Analyze stock levels, turnover, and replenishment needs.", "inventory, stock analysis, reorder point", "Check units, locations, time period, lead time, and demand assumptions. Identify slow movers, stockouts, and safety-stock needs. Separate measured demand from forecast estimates."),
+    ("order-fulfillment", "Design reliable order picking, packing, and shipment workflows.", "order fulfillment, packing workflow", "Map order states, inventory reservations, picking, packing, carrier handoff, tracking, and exceptions. Include verification checkpoints and escalation for missing or damaged items."),
+    ("customer-retention", "Design retention initiatives using evidence about customer needs.", "customer retention, loyalty strategy", "Identify churn points, cohort behavior, and customer feedback. Design relevant lifecycle touchpoints and measurable experiments. Avoid manipulative dark patterns or unsupported uplift claims."),
+    ("community-management", "Plan healthy community operations and moderation workflows.", "community management, Discord community", "Define norms, moderation tiers, escalation, member onboarding, and feedback channels. Apply rules consistently and protect member privacy. Track health using meaningful indicators, not activity alone."),
+    ("gameplay-design", "Design game mechanics and progression systems around player goals.", "game design, gameplay mechanics", "Define player fantasy, core loop, feedback, progression, balance, and fail states. Test clarity and exploitability. Document tuning variables and how changes affect player types."),
+    ("game-economy-design", "Balance in-game currencies, sinks, rewards, and progression.", "game economy, virtual currency balance", "Map currency sources and sinks, reward rates, progression gates, and player segments. Model inflation and farming exploits. Use simulations or telemetry where available; label assumptions otherwise."),
+    ("game-performance-review", "Review game scripts and scenes for performance risks.", "game optimization, game lag, Roblox performance", "Profile before optimizing. Inspect update loops, allocations, network traffic, rendering, and event connections. Prioritize measured bottlenecks and verify on target devices, including low-end hardware."),
+    ("gameplay-testing", "Create structured tests for gameplay mechanics and progression.", "game testing, gameplay QA", "Define scenarios, starting state, expected outcomes, edge cases, and multiplayer conditions. Record reproducible steps, runtime, and severity. Retest fixes and regression paths."),
+    ("game-publishing", "Prepare a game for a controlled public release.", "publish game, game release checklist", "Verify build, platform requirements, metadata, content ratings, permissions, analytics, support channels, and rollback. Do not claim submission or publication until the platform confirms it."),
+    ("release-coordination", "Coordinate multi-team release activities and dependencies.", "release coordinator, release planning", "Define scope, owners, dependency dates, freeze windows, acceptance checks, communications, and rollback criteria. Track blockers and confirm each gate from authoritative status."),
+    ("change-management", "Plan safe operational and organizational changes.", "change management, change request", "Describe reason, scope, impact, risk, approvals, implementation, verification, rollback, and communication. Keep approval requirements explicit and distinguish approved changes from proposals."),
+    ("training-material-design", "Build structured training materials for a target audience.", "training guide, learning materials", "Define learner level, objective, prerequisites, practice, and assessment. Use examples from the actual workflow. Break material into teachable units and validate with a pilot learner."),
+    ("technical-onboarding", "Create onboarding paths for new developers or technical users.", "developer onboarding, technical onboarding", "Document access, environment setup, architecture, conventions, first task, testing, and help channels. Verify every command in a clean environment and mark account-dependent steps."),
+    ("team-process-design", "Improve team workflows, roles, handoffs, and decision practices.", "team process, workflow design", "Map work intake, prioritization, execution, review, and escalation. Identify bottlenecks and unclear ownership. Propose lightweight agreements with measurable review points."),
+    ("meeting-facilitation", "Run focused meetings that end with clear decisions and owners.", "facilitate meeting, meeting agenda", "Define desired outcome and decision-maker. Send a focused agenda, timebox topics, invite relevant voices, and capture decisions, action owners, and deadlines only when agreed."),
+    ("negotiation-preparation", "Prepare evidence-based negotiation goals and fallback positions.", "negotiation strategy, negotiate contract", "Clarify interests, constraints, alternatives, priorities, and authority. Separate must-haves from tradeable terms. Prepare objective evidence, questions, and respectful fallback options."),
+    ("customer-success-planning", "Create measurable customer success plans and adoption milestones.", "customer success, onboarding plan", "Define customer outcomes, stakeholders, baseline, adoption milestones, risks, and review cadence. Track verified usage and value indicators. Avoid promising outcomes outside the team's control."),
+    ("service-level-design", "Define measurable service commitments and escalation rules.", "SLA, service level, uptime target", "Specify availability measurement, time window, exclusions, support response targets, severity definitions, and reporting. Align commitments with actual capacity and monitoring evidence."),
+    ("quality-management", "Establish quality plans, corrective actions, and continuous improvement.", "quality management, QA process", "Define quality objectives, acceptance criteria, inspections, issue classification, corrective actions, and audit evidence. Measure recurring defects and verify corrective actions prevent recurrence."),
 ]
 
 def run_builtin(context, arguments):
@@ -1514,13 +1805,13 @@ def run_builtin(context, arguments):
     if plugin_id not in handlers:
         raise KeyError(f"unknown built-in plugin: {plugin_id}")
     args = dict(arguments or {})
-    if plugin_id in {"files-list", "files-read", "files-write", "web-fetch", "image-dimensions", "file-checksum", "directory-size", "file-size-human"}:
+    if plugin_id in {"files-list", "files-read", "files-write", "web-fetch", "image-dimensions", "file-checksum", "directory-size", "file-size-human", "file-find", "file-text-search", "duplicate-files", "directory-tree", "file-extension-count"}:
         return handlers[plugin_id](args, context)
     return handlers[plugin_id](args)
 
 
 def install_builtin_catalog(plugin_root=None, skill_root=None):
-    """Materialize all 150 plugins and 150 skills; never overwrite existing files."""
+    """Materialize all 175 plugins and 175 skills; never overwrite existing files."""
     import json as _json
     from pathlib import Path as _Path
     base = _Path(__file__).resolve().parent
@@ -1538,7 +1829,7 @@ def install_builtin_catalog(plugin_root=None, skill_root=None):
     for plugin_id, name, description, keywords, handler in PLUGIN_DEFINITIONS:
         folder = plugins / plugin_id
         folder.mkdir(exist_ok=False)
-        permissions = ["filesystem.read"] if plugin_id in {"files-list", "files-read", "image-dimensions", "file-checksum", "directory-size", "file-size-human"} else (["filesystem.write"] if plugin_id == "files-write" else (["network.read"] if plugin_id == "web-fetch" else []))
+        permissions = ["filesystem.read"] if plugin_id in {"files-list", "files-read", "image-dimensions", "file-checksum", "directory-size", "file-size-human", "file-find", "file-text-search", "duplicate-files", "directory-tree", "file-extension-count"} else (["filesystem.write"] if plugin_id == "files-write" else (["network.read"] if plugin_id == "web-fetch" else []))
         manifest = {"id": plugin_id, "name": name, "version": "1.0.0", "description": description,
                     "entrypoint": "plugin.py", "capabilities": ["network-read"] if plugin_id == "web-fetch" else ["local-processing"],
                     "permissions": permissions, "keywords": list(keywords)}
@@ -1569,7 +1860,7 @@ def install_builtin_catalog(plugin_root=None, skill_root=None):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Install Plug's 150 built-in plugins and 150 skills.")
+    parser = argparse.ArgumentParser(description="Install Plug's 175 built-in plugins and 175 skills.")
     parser.add_argument("--install", action="store_true", help="materialize the bundled catalog")
     args = parser.parse_args()
     if args.install:

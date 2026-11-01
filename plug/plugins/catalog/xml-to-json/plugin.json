@@ -1,0 +1,16 @@
+{
+  "id": "xml-to-json",
+  "name": "XML to JSON",
+  "version": "1.0.0",
+  "description": "Convert XML text structure into JSON.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "xml",
+    "json",
+    "convert"
+  ]
+}

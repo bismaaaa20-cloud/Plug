@@ -1,0 +1,16 @@
+{
+  "id": "html-image-extract",
+  "name": "HTML Image Extractor",
+  "version": "1.0.0",
+  "description": "Extract image source and alternative text from HTML.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "html",
+    "image",
+    "alt"
+  ]
+}

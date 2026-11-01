@@ -1,0 +1,16 @@
+{
+  "id": "password-strength",
+  "name": "Password Strength Heuristic",
+  "version": "1.0.0",
+  "description": "Estimate password length and character-class variety without storing it.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "password",
+    "strength",
+    "security"
+  ]
+}

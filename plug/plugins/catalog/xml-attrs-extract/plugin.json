@@ -1,0 +1,16 @@
+{
+  "id": "xml-attrs-extract",
+  "name": "XML Attribute Extractor",
+  "version": "1.0.0",
+  "description": "Extract XML element attributes into structured records.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "xml",
+    "attributes",
+    "extract"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "css-colors-extract",
+  "name": "CSS Color Extractor",
+  "version": "1.0.0",
+  "description": "Extract unique hexadecimal color literals from CSS.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "css",
+    "color",
+    "extract"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "file-find",
+  "name": "File Finder",
+  "version": "1.0.0",
+  "description": "Find files or directories by glob pattern; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "file",
+    "find",
+    "glob"
+  ]
+}

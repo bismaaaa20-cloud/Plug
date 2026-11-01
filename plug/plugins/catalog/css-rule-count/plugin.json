@@ -1,0 +1,16 @@
+{
+  "id": "css-rule-count",
+  "name": "CSS Rule Counter",
+  "version": "1.0.0",
+  "description": "Count CSS selectors and declarations while ignoring block comments.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "css",
+    "rules",
+    "count"
+  ]
+}

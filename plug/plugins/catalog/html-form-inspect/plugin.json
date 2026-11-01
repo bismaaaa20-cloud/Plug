@@ -1,0 +1,16 @@
+{
+  "id": "html-form-inspect",
+  "name": "HTML Form Inspector",
+  "version": "1.0.0",
+  "description": "Inspect form actions, methods, and named input fields.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "html",
+    "form",
+    "inspect"
+  ]
+}

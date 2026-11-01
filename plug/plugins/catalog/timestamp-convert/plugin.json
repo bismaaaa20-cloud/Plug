@@ -1,0 +1,16 @@
+{
+  "id": "timestamp-convert",
+  "name": "Timestamp Converter",
+  "version": "1.0.0",
+  "description": "Convert between Unix timestamps and ISO date-times.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "timestamp",
+    "unix",
+    "datetime"
+  ]
+}

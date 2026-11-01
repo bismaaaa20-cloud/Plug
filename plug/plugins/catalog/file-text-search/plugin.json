@@ -1,0 +1,18 @@
+{
+  "id": "file-text-search",
+  "name": "File Text Search",
+  "version": "1.0.0",
+  "description": "Search UTF-8 text files for a phrase; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "file",
+    "search",
+    "text"
+  ]
+}

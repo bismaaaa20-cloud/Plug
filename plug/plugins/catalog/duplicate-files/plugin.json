@@ -1,0 +1,18 @@
+{
+  "id": "duplicate-files",
+  "name": "Duplicate File Finder",
+  "version": "1.0.0",
+  "description": "Group duplicate files by size and SHA-256; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "file",
+    "duplicate",
+    "checksum"
+  ]
+}

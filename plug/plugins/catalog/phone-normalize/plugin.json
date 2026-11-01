@@ -1,0 +1,16 @@
+{
+  "id": "phone-normalize",
+  "name": "Phone Normalizer",
+  "version": "1.0.0",
+  "description": "Normalize phone-like text to digits and an optional leading plus.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "phone",
+    "normalize",
+    "digits"
+  ]
+}

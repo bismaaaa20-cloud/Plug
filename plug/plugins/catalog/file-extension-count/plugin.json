@@ -1,0 +1,18 @@
+{
+  "id": "file-extension-count",
+  "name": "File Extension Counter",
+  "version": "1.0.0",
+  "description": "Count file extensions in a directory tree; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "file",
+    "extension",
+    "count"
+  ]
+}

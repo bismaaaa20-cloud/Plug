@@ -1,0 +1,16 @@
+{
+  "id": "url-build",
+  "name": "URL Builder",
+  "version": "1.0.0",
+  "description": "Build a URL from a base address and query parameters.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "url",
+    "build",
+    "query"
+  ]
+}

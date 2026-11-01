@@ -1,0 +1,16 @@
+{
+  "id": "timezone-convert",
+  "name": "Timezone Converter",
+  "version": "1.0.0",
+  "description": "Convert ISO date-times into a requested IANA timezone.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "timezone",
+    "convert",
+    "datetime"
+  ]
+}

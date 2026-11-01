@@ -1,0 +1,16 @@
+{
+  "id": "json-to-xml",
+  "name": "JSON to XML",
+  "version": "1.0.0",
+  "description": "Convert JSON objects and arrays into simple XML elements.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "xml",
+    "convert"
+  ]
+}

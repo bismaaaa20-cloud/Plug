@@ -1,0 +1,16 @@
+{
+  "id": "html-heading-outline",
+  "name": "HTML Heading Outline",
+  "version": "1.0.0",
+  "description": "Extract heading levels and visible heading text from HTML.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "html",
+    "heading",
+    "outline"
+  ]
+}

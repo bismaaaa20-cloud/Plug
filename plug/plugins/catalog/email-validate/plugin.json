@@ -1,0 +1,16 @@
+{
+  "id": "email-validate",
+  "name": "Email Format Checker",
+  "version": "1.0.0",
+  "description": "Check basic email syntax without verifying mailbox existence.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "email",
+    "validate",
+    "format"
+  ]
+}

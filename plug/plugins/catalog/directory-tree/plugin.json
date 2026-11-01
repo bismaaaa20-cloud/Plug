@@ -1,0 +1,18 @@
+{
+  "id": "directory-tree",
+  "name": "Directory Tree",
+  "version": "1.0.0",
+  "description": "Create a bounded directory tree listing; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "directory",
+    "tree",
+    "folder"
+  ]
+}

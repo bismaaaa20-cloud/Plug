@@ -1,0 +1,16 @@
+{
+  "id": "random-string",
+  "name": "Random String Generator",
+  "version": "1.0.0",
+  "description": "Generate a random string using Python secrets.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "random",
+    "string",
+    "generate"
+  ]
+}

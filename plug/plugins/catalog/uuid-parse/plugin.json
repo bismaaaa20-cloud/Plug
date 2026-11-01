@@ -1,0 +1,16 @@
+{
+  "id": "uuid-parse",
+  "name": "UUID Inspector",
+  "version": "1.0.0",
+  "description": "Validate a UUID and return its canonical form and variant.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "uuid",
+    "parse",
+    "inspect"
+  ]
+}

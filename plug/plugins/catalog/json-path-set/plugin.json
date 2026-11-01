@@ -1,0 +1,16 @@
+{
+  "id": "json-path-set",
+  "name": "JSON Path Setter",
+  "version": "1.0.0",
+  "description": "Set a value at a dotted path in a JSON object copy.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "path",
+    "set"
+  ]
+}
