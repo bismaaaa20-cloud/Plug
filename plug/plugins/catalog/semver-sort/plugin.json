@@ -1,0 +1,16 @@
+{
+  "id": "semver-sort",
+  "name": "Semantic Version Sorter",
+  "version": "1.0.0",
+  "description": "Sort numeric MAJOR.MINOR.PATCH version strings.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "semver",
+    "version",
+    "sort"
+  ]
+}

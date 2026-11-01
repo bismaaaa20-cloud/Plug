@@ -1,0 +1,16 @@
+{
+  "id": "python-classes",
+  "name": "Python Class Finder",
+  "version": "1.0.0",
+  "description": "List Python classes and their direct methods.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "python",
+    "classes",
+    "ast"
+  ]
+}

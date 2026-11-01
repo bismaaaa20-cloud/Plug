@@ -19,32 +19,34 @@ from plug.skills.loader import SkillRegistry
 
 
 class BuiltinCatalogTests(unittest.TestCase):
-    def test_catalog_has_exactly_125_plugins_and_125_skills(self):
-        self.assertEqual(len(PLUGIN_DEFINITIONS), 125)
-        self.assertEqual(len(SKILL_DEFINITIONS), 125)
-        self.assertEqual(len({item[0] for item in PLUGIN_DEFINITIONS}), 125)
-        self.assertEqual(len({item[0] for item in SKILL_DEFINITIONS}), 125)
+    def test_catalog_has_exactly_150_plugins_and_150_skills(self):
+        self.assertEqual(len(PLUGIN_DEFINITIONS), 150)
+        self.assertEqual(len(SKILL_DEFINITIONS), 150)
+        self.assertEqual(len({item[0] for item in PLUGIN_DEFINITIONS}), 150)
+        self.assertEqual(len({item[0] for item in SKILL_DEFINITIONS}), 150)
 
     def test_installer_materializes_all_items_and_discovery_finds_them(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             plugin_root, skill_root = root / "plugins", root / "skills"
             result = install_builtin_catalog(plugin_root, skill_root)
-            self.assertEqual(result["plugins"], 125)
-            self.assertEqual(result["skills"], 125)
-            self.assertEqual(len(list(plugin_root.glob("*/plugin.json"))), 125)
-            self.assertEqual(len(list(skill_root.glob("*/SKILL.md"))), 125)
-            self.assertEqual(len(list(skill_root.glob("*/scripts/main.py"))), 125)
+            self.assertEqual(result["plugins"], 150)
+            self.assertEqual(result["skills"], 150)
+            self.assertEqual(len(list(plugin_root.glob("*/plugin.json"))), 150)
+            self.assertEqual(len(list(skill_root.glob("*/SKILL.md"))), 150)
+            self.assertEqual(len(list(skill_root.glob("*/scripts/main.py"))), 150)
             plugins = PluginRegistry()
             plugins.discover(plugin_root)
-            self.assertEqual(len(plugins.names()), 125)
+            self.assertEqual(len(plugins.names()), 150)
             skills = SkillRegistry()
             skills.discover(skill_root)
-            self.assertEqual(len(skills.names()), 125)
+            self.assertEqual(len(skills.names()), 150)
 
     def test_all_plugin_handlers_execute(self):
         with tempfile.TemporaryDirectory() as archive_dir:
             archive_path = Path(archive_dir) / "sample.zip"
+            image_path = Path(archive_dir) / "tiny.png"
+            image_path.write_bytes(b"\\x89PNG\\r\\n\\x1a\\n" + b"\\x00\\x00\\x00\\x0dIHDR" + (2).to_bytes(4, "big") + (1).to_bytes(4, "big"))
             with zipfile.ZipFile(archive_path, "w") as archive:
                 archive.writestr("sample.txt", "hello")
             samples = {
@@ -173,6 +175,31 @@ class BuiltinCatalogTests(unittest.TestCase):
                 "csv-filter-range": {"csv": "v\n1\n5\n9\n", "column": "v", "minimum": 2, "maximum": 8},
                 "csv-pivot": {"csv": "team,score\nA,2\nA,3\nB,4\n", "group_by": "team", "value_column": "score", "aggregate": "sum"},
                 "csv-validate": {"csv": "a,b\n1,\n", "required": ["a", "b"]},
+                "python-ast-summary": {"source": "import os\ndef f():\n return 1"},
+                "python-imports": {"source": "import os\nfrom pathlib import Path"},
+                "python-functions": {"source": "def run():\n pass"},
+                "python-classes": {"source": "class A:\n def f(self): pass"},
+                "lua-functions": {"source": "function hello() end"},
+                "lua-requires": {"source": "local x = require(\"ReplicatedStorage.X\")"},
+                "js-imports": {"source": "import React from \"react\"; const fs = require(\"fs\");"},
+                "js-functions": {"source": "function hello() {} const go = () => 1;"},
+                "html-meta-extract": {"html": "<title>Hi</title><meta name=\"description\" content=\"Page\">"},
+                "xml-format": {"xml": "<root><x>1</x></root>"},
+                "log-level-count": {"text": "INFO start\nERROR fail\nINFO done"},
+                "traceback-summary": {"traceback": "File \"a.py\", line 2\nValueError: bad"},
+                "git-diff-stats": {"diff": "--- a\n+++ b\n-old\n+new\n"},
+                "semver-normalize": {"version": "v01.2.3"},
+                "semver-sort": {"versions": ["1.2.0", "1.10.0", "1.3.0"]},
+                "duration-parse": {"value": "01:02:03"},
+                "image-dimensions": {"path": image_path},
+                "file-checksum": {"path": __file__},
+                "directory-size": {"path": archive_dir},
+                "file-size-human": {"path": __file__},
+                "file-mime-guess": {"filename": "photo.png"},
+                "file-name-sanitize": {"name": "hello world?.png"},
+                "path-extension": {"path": "assets/logo.PNG"},
+                "code-fence-extract": {"markdown": "```python\nprint(1)\n```"},
+                "markdown-word-count": {"markdown": "# Title\nhello world"},
             }
 
             class Context:
@@ -236,12 +263,12 @@ class BuiltinCatalogTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         plugins = PluginRegistry()
         skills = SkillRegistry()
-        self.assertEqual(len(plugins.discover(root / "plug" / "plugins" / "catalog")), 125)
-        self.assertEqual(len(skills.discover(root / "plug" / "skills" / "catalog")), 125)
+        self.assertEqual(len(plugins.discover(root / "plug" / "plugins" / "catalog")), 150)
+        self.assertEqual(len(skills.discover(root / "plug" / "skills" / "catalog")), 150)
         result = install_builtin_catalog()
         self.assertTrue(result["already_installed"])
-        self.assertEqual(result["plugins"], 125)
-        self.assertEqual(result["skills"], 125)
+        self.assertEqual(result["plugins"], 150)
+        self.assertEqual(result["skills"], 150)
 
     def test_installer_refuses_to_overwrite_existing_catalog(self):
         with tempfile.TemporaryDirectory() as temp:

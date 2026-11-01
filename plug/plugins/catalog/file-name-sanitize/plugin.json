@@ -1,0 +1,16 @@
+{
+  "id": "file-name-sanitize",
+  "name": "Filename Sanitizer",
+  "version": "1.0.0",
+  "description": "Normalize a filename to a conservative character set.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "filename",
+    "sanitize",
+    "file"
+  ]
+}

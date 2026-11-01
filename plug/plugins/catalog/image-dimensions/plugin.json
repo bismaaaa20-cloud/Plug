@@ -1,0 +1,18 @@
+{
+  "id": "image-dimensions",
+  "name": "Image Dimension Reader",
+  "version": "1.0.0",
+  "description": "Read width and height from PNG or GIF headers; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "image",
+    "dimensions",
+    "metadata"
+  ]
+}

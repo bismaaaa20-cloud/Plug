@@ -1,0 +1,16 @@
+{
+  "id": "js-imports",
+  "name": "JavaScript Import Extractor",
+  "version": "1.0.0",
+  "description": "Extract import and require module specifiers.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "javascript",
+    "imports",
+    "dependencies"
+  ]
+}

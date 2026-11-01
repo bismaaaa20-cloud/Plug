@@ -1,0 +1,16 @@
+{
+  "id": "xml-format",
+  "name": "XML Pretty Printer",
+  "version": "1.0.0",
+  "description": "Validate and pretty-print XML text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "xml",
+    "format",
+    "pretty"
+  ]
+}

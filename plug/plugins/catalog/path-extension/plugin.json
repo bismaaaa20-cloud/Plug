@@ -1,0 +1,16 @@
+{
+  "id": "path-extension",
+  "name": "Path Extension Inspector",
+  "version": "1.0.0",
+  "description": "Return basename, stem, and lowercase suffix for a path.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "path",
+    "extension",
+    "filename"
+  ]
+}

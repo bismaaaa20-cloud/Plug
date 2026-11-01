@@ -1,0 +1,16 @@
+{
+  "id": "code-fence-extract",
+  "name": "Markdown Code Fence Extractor",
+  "version": "1.0.0",
+  "description": "Extract fenced code blocks and language labels.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "markdown",
+    "code fence",
+    "extract"
+  ]
+}

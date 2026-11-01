@@ -1,0 +1,16 @@
+{
+  "id": "git-diff-stats",
+  "name": "Git Diff Statistics",
+  "version": "1.0.0",
+  "description": "Count changed lines and file paths in a unified Git diff.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "git",
+    "diff",
+    "statistics"
+  ]
+}

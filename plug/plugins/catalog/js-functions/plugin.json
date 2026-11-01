@@ -1,0 +1,16 @@
+{
+  "id": "js-functions",
+  "name": "JavaScript Function Finder",
+  "version": "1.0.0",
+  "description": "Find common named function and arrow-function declarations.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "javascript",
+    "functions",
+    "source"
+  ]
+}

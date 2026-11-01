@@ -1,0 +1,16 @@
+{
+  "id": "python-imports",
+  "name": "Python Import Extractor",
+  "version": "1.0.0",
+  "description": "List unique imported modules from Python source.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "python",
+    "imports",
+    "dependencies"
+  ]
+}

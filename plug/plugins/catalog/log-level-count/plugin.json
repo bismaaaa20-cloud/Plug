@@ -1,0 +1,16 @@
+{
+  "id": "log-level-count",
+  "name": "Log Level Counter",
+  "version": "1.0.0",
+  "description": "Count DEBUG, INFO, WARNING, ERROR, and CRITICAL labels.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "log",
+    "levels",
+    "count"
+  ]
+}

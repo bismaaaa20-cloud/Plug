@@ -1,0 +1,18 @@
+{
+  "id": "directory-size",
+  "name": "Directory Size",
+  "version": "1.0.0",
+  "description": "Measure file bytes in a directory tree; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "directory",
+    "size",
+    "filesystem"
+  ]
+}

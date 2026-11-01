@@ -1,0 +1,16 @@
+{
+  "id": "python-ast-summary",
+  "name": "Python AST Summary",
+  "version": "1.0.0",
+  "description": "Summarize top-level structure, functions, classes, and imports in Python source.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "python",
+    "ast",
+    "summary"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "html-meta-extract",
+  "name": "HTML Metadata Extractor",
+  "version": "1.0.0",
+  "description": "Extract title and name/property meta tag content.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "html",
+    "meta",
+    "seo"
+  ]
+}

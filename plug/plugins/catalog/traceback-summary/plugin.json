@@ -1,0 +1,16 @@
+{
+  "id": "traceback-summary",
+  "name": "Traceback Summary",
+  "version": "1.0.0",
+  "description": "Extract exception names and file-line frames from Python tracebacks.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "traceback",
+    "exception",
+    "debug"
+  ]
+}

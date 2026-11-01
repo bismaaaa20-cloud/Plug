@@ -1,0 +1,16 @@
+{
+  "id": "lua-requires",
+  "name": "Lua Require Extractor",
+  "version": "1.0.0",
+  "description": "Extract module names passed to Lua require calls.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "lua",
+    "require",
+    "modules"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "lua-functions",
+  "name": "Lua Function Finder",
+  "version": "1.0.0",
+  "description": "Extract named Lua function declarations and line numbers.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "lua",
+    "functions",
+    "luau"
+  ]
+}

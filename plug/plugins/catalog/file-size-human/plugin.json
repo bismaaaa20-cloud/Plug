@@ -1,0 +1,18 @@
+{
+  "id": "file-size-human",
+  "name": "File Size Formatter",
+  "version": "1.0.0",
+  "description": "Report file size in bytes and a human-readable unit; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "file",
+    "size",
+    "metadata"
+  ]
+}

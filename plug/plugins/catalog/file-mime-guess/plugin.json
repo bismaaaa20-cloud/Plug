@@ -1,0 +1,16 @@
+{
+  "id": "file-mime-guess",
+  "name": "MIME Type Guesser",
+  "version": "1.0.0",
+  "description": "Guess MIME type from a filename extension.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "mime",
+    "file",
+    "type"
+  ]
+}

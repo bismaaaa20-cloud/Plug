@@ -1,0 +1,16 @@
+{
+  "id": "duration-parse",
+  "name": "Duration Parser",
+  "version": "1.0.0",
+  "description": "Parse MM:SS or HH:MM:SS into total seconds.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "duration",
+    "time",
+    "parse"
+  ]
+}

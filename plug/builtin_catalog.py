@@ -1,4 +1,4 @@
-"""First-party Plug catalog: 125 plugins and 125 task-specific skills.
+"""First-party Plug catalog: 150 plugins and 150 task-specific skills.
 
 Run `python -m plug.builtin_catalog --install` to materialize the catalog under
 `plug/plugins/catalog` and `plug/skills/catalog`.
@@ -1011,6 +1011,196 @@ def _make_extension_handler(task):
     return handler
 
 
+def _run_dev_extension(task, a, context):
+    if task == "python-ast-summary":
+        tree = ast.parse(str(a.get("source", "")))
+        return {"top_level_nodes": len(tree.body),
+                "functions": sum(isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) for n in ast.walk(tree)),
+                "classes": sum(isinstance(n, ast.ClassDef) for n in ast.walk(tree)),
+                "imports": sum(isinstance(n, (ast.Import, ast.ImportFrom)) for n in ast.walk(tree))}
+    if task == "python-imports":
+        tree = ast.parse(str(a.get("source", "")))
+        found = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                found.extend(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                found.append(node.module or "")
+        found = list(dict.fromkeys(found))
+        return {"imports": found, "count": len(found)}
+    if task == "python-functions":
+        tree = ast.parse(str(a.get("source", "")))
+        found = [{"name": n.name, "line": n.lineno, "async": isinstance(n, ast.AsyncFunctionDef)}
+                 for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        return {"functions": found}
+    if task == "python-classes":
+        tree = ast.parse(str(a.get("source", "")))
+        found = [{"name": n.name, "line": n.lineno,
+                  "methods": [x.name for x in n.body if isinstance(x, (ast.FunctionDef, ast.AsyncFunctionDef))]}
+                 for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
+        return {"classes": found}
+    if task == "lua-functions":
+        source = str(a.get("source", ""))
+        found = [{"name": m.group(1), "line": source.count("\n", 0, m.start()) + 1}
+                 for m in re.finditer(r"\bfunction\s+([A-Za-z_][\w.:]*)", source)]
+        return {"functions": found, "count": len(found)}
+    if task == "lua-requires":
+        source = str(a.get("source", ""))
+        found = list(dict.fromkeys(re.findall(r"\brequire\s*\(?\s*['\"]([^'\"]+)['\"]\s*\)?", source)))
+        return {"modules": found, "count": len(found)}
+    if task == "js-imports":
+        source = str(a.get("source", ""))
+        found = re.findall(r"(?:import\s+(?:[^'\"]+?\s+from\s+)?|require\s*\()\s*['\"]([^'\"]+)['\"]", source)
+        return {"imports": found, "count": len(found)}
+    if task == "js-functions":
+        source = str(a.get("source", ""))
+        names = re.findall(r"\bfunction\s+([A-Za-z_$][\w$]*)\s*\(", source)
+        names += re.findall(r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>", source)
+        names = list(dict.fromkeys(names))
+        return {"functions": names, "count": len(names)}
+    if task == "html-meta-extract":
+        source = str(a.get("html", ""))
+        metas = []
+        for tag in re.findall(r"(?is)<meta\b[^>]*>", source):
+            name = re.search(r"(?i)(?:name|property)\s*=\s*['\"]([^'\"]+)", tag)
+            content = re.search(r"(?i)content\s*=\s*['\"]([^'\"]*)", tag)
+            if name and content:
+                metas.append({"name": name.group(1), "content": html.unescape(content.group(1))})
+        title = re.search(r"(?is)<title[^>]*>(.*?)</title>", source)
+        return {"title": html.unescape(title.group(1).strip()) if title else "", "meta": metas}
+    if task == "xml-format":
+        from xml.dom import minidom
+        document = minidom.parseString(str(a.get("xml", "")))
+        return {"xml": document.toprettyxml(indent="  ")}
+    if task == "log-level-count":
+        text = str(a.get("text", ""))
+        levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        counts = {level: len(re.findall(r"\b" + level + r"\b", text, flags=re.I)) for level in levels}
+        return {"counts": counts, "total": sum(counts.values())}
+    if task == "traceback-summary":
+        text = str(a.get("traceback", a.get("text", "")))
+        last = next((line.strip() for line in reversed(text.splitlines()) if line.strip()), "")
+        frames = [{"file": m.group(1), "line": int(m.group(2))}
+                  for m in re.finditer(r'File "([^"]+)", line (\d+)', text)]
+        error = re.search(r"([A-Za-z_][A-Za-z0-9]*Error|Exception):\s*(.*)$", last)
+        return {"last_line": last, "exception": error.group(1) if error else None,
+                "message": error.group(2) if error else "", "frames": frames}
+    if task == "git-diff-stats":
+        lines = str(a.get("diff", "")).splitlines()
+        added = sum(line.startswith("+") and not line.startswith("+++") for line in lines)
+        removed = sum(line.startswith("-") and not line.startswith("---") for line in lines)
+        files = [line[11:] for line in lines if line.startswith("diff --git ")]
+        return {"files": files, "added": added, "removed": removed}
+    if task == "semver-normalize":
+        raw = str(a.get("version", "")).strip()
+        match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", raw)
+        if not match:
+            raise ValueError("version must be MAJOR.MINOR.PATCH without prerelease")
+        return {"version": ".".join(str(int(part)) for part in match.groups())}
+    if task == "semver-sort":
+        versions = [str(value).strip() for value in a.get("versions", [])]
+        def parse(value):
+            match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", value)
+            if not match:
+                raise ValueError("all versions must be MAJOR.MINOR.PATCH")
+            return tuple(map(int, match.groups()))
+        return {"versions": sorted(versions, key=parse), "count": len(versions)}
+    if task == "duration-parse":
+        raw = str(a.get("value", ""))
+        parts = raw.split(":")
+        if not 2 <= len(parts) <= 3 or any(not part.isdigit() for part in parts):
+            raise ValueError("use MM:SS or HH:MM:SS")
+        numbers = list(map(int, parts))
+        if any(value >= 60 for value in numbers[1:]):
+            raise ValueError("minutes and seconds must be below 60")
+        seconds = numbers[-1] + numbers[-2] * 60 + (numbers[-3] * 3600 if len(numbers) == 3 else 0)
+        return {"seconds": seconds, "duration": raw}
+    if task == "image-dimensions":
+        context.require("filesystem.read")
+        path = Path(str(a.get("path", ""))).expanduser().resolve()
+        data = path.read_bytes()[:4000000]
+        if data.startswith(b"\x89PNG\r\n\x1a\n") and len(data) >= 24:
+            width = int.from_bytes(data[16:20], "big")
+            height = int.from_bytes(data[20:24], "big")
+        elif data[:6] in {b"GIF87a", b"GIF89a"} and len(data) >= 10:
+            width = int.from_bytes(data[6:8], "little")
+            height = int.from_bytes(data[8:10], "little")
+        else:
+            raise ValueError("unsupported or invalid PNG or GIF file")
+        if not width or not height:
+            raise ValueError("image dimensions must be positive")
+        return {"path": str(path), "width": width, "height": height,
+                "aspect_ratio": round(width / height, 4)}
+    if task == "file-checksum":
+        context.require("filesystem.read")
+        path = Path(str(a.get("path", ""))).expanduser().resolve()
+        algorithm = str(a.get("algorithm", "sha256")).lower()
+        if algorithm not in hashlib.algorithms_guaranteed:
+            raise ValueError("unsupported hash algorithm")
+        digest = hashlib.new(algorithm)
+        with path.open("rb") as file:
+            for chunk in iter(lambda: file.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return {"path": str(path), "algorithm": algorithm, "digest": digest.hexdigest()}
+    if task == "directory-size":
+        context.require("filesystem.read")
+        root = Path(str(a.get("path", "."))).expanduser().resolve()
+        if not root.is_dir():
+            raise ValueError("path is not a directory")
+        limit = max(1, min(int(a.get("max_files", 10000)), 100000))
+        total = count = 0
+        for item in root.rglob("*"):
+            if item.is_file() and not item.is_symlink():
+                total += item.stat().st_size
+                count += 1
+                if count >= limit:
+                    break
+        return {"path": str(root), "bytes": total, "files_scanned": count, "limit": limit}
+    if task == "file-size-human":
+        context.require("filesystem.read")
+        path = Path(str(a.get("path", ""))).expanduser().resolve()
+        size = path.stat().st_size
+        value, unit = float(size), "B"
+        for candidate in ["KB", "MB", "GB", "TB"]:
+            if value < 1024:
+                break
+            value /= 1024
+            unit = candidate
+        return {"path": str(path), "bytes": size, "human": f"{value:.2f} {unit}"}
+    if task == "file-mime-guess":
+        import mimetypes
+        name = str(a.get("filename", ""))
+        mime, encoding = mimetypes.guess_type(name)
+        return {"filename": name, "mime_type": mime, "encoding": encoding}
+    if task == "file-name-sanitize":
+        name = str(a.get("name", ""))
+        cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", name).strip(".-")
+        return {"filename": cleaned[:180]}
+    if task == "path-extension":
+        from pathlib import PurePath
+        name = str(a.get("path", ""))
+        path = PurePath(name)
+        return {"name": path.name, "stem": path.stem, "suffix": path.suffix.lower()}
+    if task == "code-fence-extract":
+        source = str(a.get("markdown", a.get("text", "")))
+        fence = chr(96) * 3
+        pattern = re.escape(fence) + r"([^\n]*)\n(.*?)" + re.escape(fence)
+        blocks = [{"language": (m.group(1) or "").strip(), "code": m.group(2)}
+                  for m in re.finditer(pattern, source, flags=re.S)]
+        return {"blocks": blocks, "count": len(blocks)}
+    if task == "markdown-word-count":
+        text = re.sub(r"(?m)^\s*#+\s*", "", str(a.get("markdown", a.get("text", ""))))
+        words = re.findall(r"\b[\w']+\b", text)
+        return {"words": len(words), "characters": len(text)}
+    raise KeyError("unknown developer extension task: " + task)
+
+
+def _make_dev_extension_handler(task):
+    def handler(arguments, context=None):
+        return _run_dev_extension(task, arguments, context)
+    return handler
+
+
 PLUGIN_DEFINITIONS = [
     ("text-stats", "Text Statistics", "Count characters, words and lines.", ("text", "count", "words"), _text_stats),
     ("text-clean", "Text Cleaner", "Trim and normalize whitespace.", ("text", "clean", "whitespace"), _text_clean),
@@ -1137,6 +1327,31 @@ PLUGIN_DEFINITIONS = [
     ("csv-filter-range", "CSV Numeric Range Filter", "Filter CSV rows by an inclusive numeric range.", ["csv","filter","range"], _make_extension_handler("csv-filter-range")),
     ("csv-pivot", "CSV Group Summary", "Group CSV rows and calculate counts or numeric sums.", ["csv","pivot","group"], _make_extension_handler("csv-pivot")),
     ("csv-validate", "CSV Schema Validator", "Check required headers and missing values in CSV rows.", ["csv","validate","schema"], _make_extension_handler("csv-validate")),
+    ("python-ast-summary", "Python AST Summary", "Summarize top-level structure, functions, classes, and imports in Python source.", ["python","ast","summary"], _make_dev_extension_handler("python-ast-summary")),
+    ("python-imports", "Python Import Extractor", "List unique imported modules from Python source.", ["python","imports","dependencies"], _make_dev_extension_handler("python-imports")),
+    ("python-functions", "Python Function Finder", "List Python functions and async functions with line numbers.", ["python","functions","ast"], _make_dev_extension_handler("python-functions")),
+    ("python-classes", "Python Class Finder", "List Python classes and their direct methods.", ["python","classes","ast"], _make_dev_extension_handler("python-classes")),
+    ("lua-functions", "Lua Function Finder", "Extract named Lua function declarations and line numbers.", ["lua","functions","luau"], _make_dev_extension_handler("lua-functions")),
+    ("lua-requires", "Lua Require Extractor", "Extract module names passed to Lua require calls.", ["lua","require","modules"], _make_dev_extension_handler("lua-requires")),
+    ("js-imports", "JavaScript Import Extractor", "Extract import and require module specifiers.", ["javascript","imports","dependencies"], _make_dev_extension_handler("js-imports")),
+    ("js-functions", "JavaScript Function Finder", "Find common named function and arrow-function declarations.", ["javascript","functions","source"], _make_dev_extension_handler("js-functions")),
+    ("html-meta-extract", "HTML Metadata Extractor", "Extract title and name/property meta tag content.", ["html","meta","seo"], _make_dev_extension_handler("html-meta-extract")),
+    ("xml-format", "XML Pretty Printer", "Validate and pretty-print XML text.", ["xml","format","pretty"], _make_dev_extension_handler("xml-format")),
+    ("log-level-count", "Log Level Counter", "Count DEBUG, INFO, WARNING, ERROR, and CRITICAL labels.", ["log","levels","count"], _make_dev_extension_handler("log-level-count")),
+    ("traceback-summary", "Traceback Summary", "Extract exception names and file-line frames from Python tracebacks.", ["traceback","exception","debug"], _make_dev_extension_handler("traceback-summary")),
+    ("git-diff-stats", "Git Diff Statistics", "Count changed lines and file paths in a unified Git diff.", ["git","diff","statistics"], _make_dev_extension_handler("git-diff-stats")),
+    ("semver-normalize", "Semantic Version Normalizer", "Normalize numeric MAJOR.MINOR.PATCH version strings.", ["semver","version","normalize"], _make_dev_extension_handler("semver-normalize")),
+    ("semver-sort", "Semantic Version Sorter", "Sort numeric MAJOR.MINOR.PATCH version strings.", ["semver","version","sort"], _make_dev_extension_handler("semver-sort")),
+    ("duration-parse", "Duration Parser", "Parse MM:SS or HH:MM:SS into total seconds.", ["duration","time","parse"], _make_dev_extension_handler("duration-parse")),
+    ("image-dimensions", "Image Dimension Reader", "Read width and height from PNG or GIF headers; requires filesystem.read.", ["image","dimensions","metadata"], _make_dev_extension_handler("image-dimensions")),
+    ("file-checksum", "File Checksum", "Calculate a cryptographic checksum of a file; requires filesystem.read.", ["file","checksum","sha256"], _make_dev_extension_handler("file-checksum")),
+    ("directory-size", "Directory Size", "Measure file bytes in a directory tree; requires filesystem.read.", ["directory","size","filesystem"], _make_dev_extension_handler("directory-size")),
+    ("file-size-human", "File Size Formatter", "Report file size in bytes and a human-readable unit; requires filesystem.read.", ["file","size","metadata"], _make_dev_extension_handler("file-size-human")),
+    ("file-mime-guess", "MIME Type Guesser", "Guess MIME type from a filename extension.", ["mime","file","type"], _make_dev_extension_handler("file-mime-guess")),
+    ("file-name-sanitize", "Filename Sanitizer", "Normalize a filename to a conservative character set.", ["filename","sanitize","file"], _make_dev_extension_handler("file-name-sanitize")),
+    ("path-extension", "Path Extension Inspector", "Return basename, stem, and lowercase suffix for a path.", ["path","extension","filename"], _make_dev_extension_handler("path-extension")),
+    ("code-fence-extract", "Markdown Code Fence Extractor", "Extract fenced code blocks and language labels.", ["markdown","code fence","extract"], _make_dev_extension_handler("code-fence-extract")),
+    ("markdown-word-count", "Markdown Word Counter", "Count words in Markdown after removing heading markers.", ["markdown","word count","text"], _make_dev_extension_handler("markdown-word-count")),
 ]
 
 SKILL_DEFINITIONS = [
@@ -1265,6 +1480,31 @@ SKILL_DEFINITIONS = [
     ("pricing-strategy", "Evaluate pricing options against value, costs, and market context.", "pricing strategy, price model", "Identify segments, value metrics, costs, alternatives, and willingness-to-pay evidence. Model tiering and trade-offs. Avoid unsupported competitor price claims and validate with customer research."),
     ("vendor-evaluation", "Compare vendors using consistent criteria and documented evidence.", "vendor selection, vendor review", "Define mandatory requirements, security, privacy, cost, reliability, support, and exit criteria. Score evidence consistently and record gaps. Do not infer compliance from marketing statements."),
     ("contract-review", "Summarize contract clauses and flag issues for qualified legal review.", "contract review, agreement analysis", "Identify parties, scope, fees, term, renewal, termination, liability, data handling, confidentiality, IP, and dispute clauses. Quote exact clause references. Do not provide legal conclusions or substitute for counsel."),
+    ("python-testing", "Design tests for Python packages and applications.", "python tests, pytest, unittest", "Inspect existing test conventions. Add deterministic tests for public behavior, boundaries, invalid input, permissions, and regressions. Use temporary files and mocks for external services. Run the exact test command and report failures."),
+    ("lua-script-review", "Review Lua or Luau scripts for correctness and runtime assumptions.", "review Lua, Luau script review, Roblox code review", "Confirm runtime and API availability. Trace event lifecycles, state ownership, cleanup, and client/server boundaries. Identify concrete bugs and unsafe assumptions with file and line references. Preserve intended behavior."),
+    ("game-ui-development", "Build game interfaces that remain responsive and performant in-game.", "game UI, Roblox UI, game panel", "Identify platform APIs, input modes, safe areas, and performance limits. Define panel hierarchy, touch targets, toggles, sliders, dropdowns, and feedback. Avoid heavy animation on low-end devices and test actual states."),
+    ("roblox-luau-development", "Develop maintainable Roblox Luau modules and interfaces.", "Roblox Luau, Roblox script, RemoteEvent", "Use documented Roblox services and Luau conventions. Separate client visuals from server authority, validate RemoteEvent inputs, and clean up connections. State assumptions about Studio or other runtime explicitly."),
+    ("web-frontend-accessibility", "Build accessible browser UI with responsive interaction states.", "frontend accessibility, accessible website", "Use semantic HTML, labels, keyboard focus, contrast, headings, and accessible errors. Test responsive behavior and reduced-motion preferences. Avoid replacing native controls without a clear need."),
+    ("web-content-operations", "Plan and maintain accurate website content across pages.", "website content, web content ops", "Define page purpose, audience, owner, source, update cadence, and metadata. Keep facts current and links valid. Establish a review workflow and change history for important content."),
+    ("browser-research", "Conduct structured research using a live browser and source notes.", "browser research, investigate website", "Use an authorized browser or web search capability. Record search terms, source dates, relevant passages, and URLs. Cross-check key claims and note pages that are blocked or require sign-in."),
+    ("video-asset-management", "Organize video files, metadata, and project assets.", "video assets, footage organization", "Define naming, folder structure, proxies, source backups, rights notes, and versioning. Record duration, resolution, frame rate, audio tracks, and project references when metadata is available."),
+    ("multimedia-production", "Coordinate video, audio, image, and caption deliverables.", "multimedia project, media production", "Define output formats, aspect ratios, accessibility requirements, source rights, and delivery milestones. Track asset dependencies and review checkpoints. Render only with available editing tools."),
+    ("image-asset-pipeline", "Organize image generation, editing, export, and optimization.", "image pipeline, image assets", "Define source format, dimensions, color profile, transparent-background needs, naming, and export variants. Preserve masters and verify rendered assets at display size. Distinguish original assets from reference material."),
+    ("design-handoff", "Prepare implementation-ready design specifications for developers.", "design handoff, Figma handoff", "Provide component states, spacing, typography, tokens, assets, breakpoints, and interaction notes. Record unresolved questions and edge cases. Ensure annotations match the approved design, not outdated mockups."),
+    ("visual-regression-testing", "Detect unintended visual changes between UI builds.", "visual regression, screenshot compare", "Choose stable viewports and deterministic test data. Capture baseline and candidate screenshots under equivalent conditions. Review diffs for meaningful layout changes and avoid treating dynamic content as regressions."),
+    ("api-documentation", "Write accurate API references and usage examples.", "API documentation, OpenAPI, endpoint guide", "Derive method, path, auth, parameters, schemas, responses, errors, and rate limits from the real contract. Keep examples runnable and redact secrets. Mark unsupported behavior explicitly."),
+    ("data-migration", "Plan and verify safe data migrations.", "data migration, database migration", "Define source and target schemas, transformation rules, validation, backup, downtime, and rollback. Use dry runs and row-count checks. Preserve auditability and do not delete source data before verification."),
+    ("schema-evolution", "Manage backward-compatible changes to data and API schemas.", "schema evolution, schema compatibility", "Identify consumers and compatibility requirements. Plan additive changes, dual-read/write periods, deprecation, and rollback. Validate old and new versions with contract tests."),
+    ("database-backup-planning", "Design and verify database backup and restore procedures.", "database backup, recovery plan", "Define RPO/RTO, backup frequency, encryption, retention, and offsite copies. Test restores in an isolated environment. Document ownership, monitoring, and failure escalation."),
+    ("cloud-cost-review", "Analyze cloud usage and find cost-saving opportunities.", "cloud cost, FinOps, cloud spend", "Map services, usage, commitments, storage, and egress. Separate variable and fixed costs. Recommend rightsizing and lifecycle policies with reliability trade-offs and measurable savings estimates."),
+    ("reliability-engineering", "Improve service reliability using failure analysis and SLOs.", "SRE, reliability, SLO", "Define user-facing SLIs and SLOs. Analyze incidents, saturation, dependencies, and error budgets. Prioritize resilience work based on impact and verify recovery behavior through safe tests."),
+    ("disaster-recovery", "Design disaster recovery strategy and restore exercises.", "disaster recovery, DR plan", "Identify critical systems, data, dependencies, RPO/RTO, and recovery order. Define alternate infrastructure, contacts, and validation checks. Run tabletop and restore exercises and track gaps."),
+    ("sre-runbook", "Create actionable runbooks for site reliability operations.", "SRE runbook, on-call procedure", "State symptoms, impact, dashboards, safe diagnostic commands, mitigations, verification, escalation, and rollback. Warn about destructive steps and keep instructions synchronized with deployment topology."),
+    ("customer-feedback-analysis", "Synthesize customer comments into evidence-backed themes.", "customer feedback, review analysis", "Deduplicate feedback, preserve source context, and categorize requests, pain, and praise. Quantify only the supplied sample. Separate frequency from severity and avoid treating vocal users as representative."),
+    ("churn-analysis", "Analyze customer churn patterns and retention opportunities.", "churn, retention analysis", "Define churn event, cohort, period, and customer segment. Check missing data and denominator choices. Compare retention curves and possible drivers without asserting causation from correlation."),
+    ("survey-design", "Create neutral surveys with clear response scales.", "survey questions, questionnaire design", "Clarify research objective and population. Use neutral wording, one concept per question, balanced options, and appropriate scales. Minimize sensitive data and plan analysis before fielding."),
+    ("pricing-research", "Research willingness to pay and pricing perceptions.", "pricing research, willingness to pay", "Define segments and value metric. Choose interviews, survey, or behavioral evidence. Avoid leading questions and explain sampling limits. Compare willingness-to-pay evidence with costs and alternatives."),
+    ("product-analytics", "Define product metrics and interpret user behavior.", "product analytics, funnel metrics", "Map product goals to activation, engagement, retention, and guardrail metrics. Define event names and properties consistently. Check instrumentation, cohort definitions, privacy, and confounding factors."),
 ]
 
 def run_builtin(context, arguments):
@@ -1274,13 +1514,13 @@ def run_builtin(context, arguments):
     if plugin_id not in handlers:
         raise KeyError(f"unknown built-in plugin: {plugin_id}")
     args = dict(arguments or {})
-    if plugin_id in {"files-list", "files-read", "files-write", "web-fetch"}:
+    if plugin_id in {"files-list", "files-read", "files-write", "web-fetch", "image-dimensions", "file-checksum", "directory-size", "file-size-human"}:
         return handlers[plugin_id](args, context)
     return handlers[plugin_id](args)
 
 
 def install_builtin_catalog(plugin_root=None, skill_root=None):
-    """Materialize all 125 plugins and 125 skills; never overwrite existing files."""
+    """Materialize all 150 plugins and 150 skills; never overwrite existing files."""
     import json as _json
     from pathlib import Path as _Path
     base = _Path(__file__).resolve().parent
@@ -1298,7 +1538,7 @@ def install_builtin_catalog(plugin_root=None, skill_root=None):
     for plugin_id, name, description, keywords, handler in PLUGIN_DEFINITIONS:
         folder = plugins / plugin_id
         folder.mkdir(exist_ok=False)
-        permissions = ["filesystem.read"] if plugin_id in {"files-list", "files-read"} else (["filesystem.write"] if plugin_id == "files-write" else (["network.read"] if plugin_id == "web-fetch" else []))
+        permissions = ["filesystem.read"] if plugin_id in {"files-list", "files-read", "image-dimensions", "file-checksum", "directory-size", "file-size-human"} else (["filesystem.write"] if plugin_id == "files-write" else (["network.read"] if plugin_id == "web-fetch" else []))
         manifest = {"id": plugin_id, "name": name, "version": "1.0.0", "description": description,
                     "entrypoint": "plugin.py", "capabilities": ["network-read"] if plugin_id == "web-fetch" else ["local-processing"],
                     "permissions": permissions, "keywords": list(keywords)}
@@ -1329,7 +1569,7 @@ def install_builtin_catalog(plugin_root=None, skill_root=None):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Install Plug's 125 built-in plugins and 125 skills.")
+    parser = argparse.ArgumentParser(description="Install Plug's 150 built-in plugins and 150 skills.")
     parser.add_argument("--install", action="store_true", help="materialize the bundled catalog")
     args = parser.parse_args()
     if args.install:

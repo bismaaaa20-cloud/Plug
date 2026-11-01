@@ -1,0 +1,18 @@
+{
+  "id": "file-checksum",
+  "name": "File Checksum",
+  "version": "1.0.0",
+  "description": "Calculate a cryptographic checksum of a file; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "file",
+    "checksum",
+    "sha256"
+  ]
+}

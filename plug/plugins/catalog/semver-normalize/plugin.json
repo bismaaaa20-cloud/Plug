@@ -1,0 +1,16 @@
+{
+  "id": "semver-normalize",
+  "name": "Semantic Version Normalizer",
+  "version": "1.0.0",
+  "description": "Normalize numeric MAJOR.MINOR.PATCH version strings.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "semver",
+    "version",
+    "normalize"
+  ]
+}

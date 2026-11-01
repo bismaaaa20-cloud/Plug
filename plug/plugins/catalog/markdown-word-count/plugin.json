@@ -1,0 +1,16 @@
+{
+  "id": "markdown-word-count",
+  "name": "Markdown Word Counter",
+  "version": "1.0.0",
+  "description": "Count words in Markdown after removing heading markers.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "markdown",
+    "word count",
+    "text"
+  ]
+}

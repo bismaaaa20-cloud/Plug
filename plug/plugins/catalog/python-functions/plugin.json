@@ -1,0 +1,16 @@
+{
+  "id": "python-functions",
+  "name": "Python Function Finder",
+  "version": "1.0.0",
+  "description": "List Python functions and async functions with line numbers.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "python",
+    "functions",
+    "ast"
+  ]
+}
