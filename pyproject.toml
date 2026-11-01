@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plug-orchestrator"
+version = "0.2.0"
+description = "A provider-neutral foundation for multi-AI orchestration."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Plug contributors" }]
+dependencies = []
+
+[tool.setuptools.packages.find]
+include = ["plug*"]
+
+[tool.unittest]
+start-directory = "tests"
