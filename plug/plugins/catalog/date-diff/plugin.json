@@ -1,0 +1,16 @@
+{
+  "id": "date-diff",
+  "name": "Date Difference",
+  "version": "1.0.0",
+  "description": "Calculate the signed number of days between two ISO dates.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "date",
+    "difference",
+    "calendar"
+  ]
+}

@@ -147,6 +147,7 @@ class BuiltinCatalogTests(unittest.TestCase):
                 "ip-cidr-inspect": {"cidr": "192.168.1.0/24"},
                 "date-weekday": {"date": "2026-01-01"},
                 "date-add-days": {"date": "2026-01-01", "days": 7},
+                "date-diff": {"first": "2026-01-01", "second": "2026-01-10"},
             }
 
             class Context:

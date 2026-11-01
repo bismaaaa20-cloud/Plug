@@ -842,6 +842,13 @@ def _date_add_days(a):
     result = value + timedelta(days=int(a.get("days", 0)))
     return {"date": value.isoformat(), "days": int(a.get("days", 0)), "result": result.isoformat()}
 
+def _date_diff(a):
+    from datetime import date
+    first = date.fromisoformat(str(a.get("first", "")))
+    second = date.fromisoformat(str(a.get("second", "")))
+    return {"days": (second - first).days, "first": first.isoformat(), "second": second.isoformat()}
+
+
 PLUGIN_DEFINITIONS = [
     ("text-stats", "Text Statistics", "Count characters, words and lines.", ("text", "count", "words"), _text_stats),
     ("text-clean", "Text Cleaner", "Trim and normalize whitespace.", ("text", "clean", "whitespace"), _text_clean),
@@ -942,6 +949,7 @@ PLUGIN_DEFINITIONS = [
     ("ip-cidr-inspect", "CIDR Network Inspector", "Summarize a CIDR network range and host counts.", ["ip","cidr","network"], _ip_cidr_inspect),
     ("date-weekday", "Weekday Calculator", "Return the weekday name for an ISO date.", ["date","weekday","calendar"], _date_weekday),
     ("date-add-days", "Date Arithmetic", "Add or subtract a number of days from an ISO date.", ["date","add days","calendar"], _date_add_days),
+    ("date-diff", "Date Difference", "Calculate the signed number of days between two ISO dates.", ("date", "difference", "calendar"), _date_diff),
 ]
 
 SKILL_DEFINITIONS = [
