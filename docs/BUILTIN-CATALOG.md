@@ -117,7 +117,11 @@ logo-brief, email-writing, meeting-notes, learning-coach, decision-analysis,
 incident-response.
 
 Skills are instruction packages. Their helper scripts provide a small
-entrypoint and do not autonomously perform external actions. The skill loader
+entrypoint and do not autonomously perform external actions. A skill such as
+`ui-builder` gives a concrete design-and-implementation workflow; it still needs
+an agent with coding/file tools to produce and test an application. `web-research`
+needs an available search/browser tool. `video-analysis` needs supplied video data
+and a video-capable model/tool; it does not itself decode or stream video. The skill loader
 selects them by trigger/description keyword overlap; it is deterministic, not
 an LLM semantic router.
 
@@ -138,8 +142,9 @@ plugin handler, safe calculator behavior, and overwrite protection.
 
 Filesystem inspection plugins require `filesystem.read`; archive creation and rename operations require `filesystem.write`; copy and extraction require both. `json-schema-lite` checks a deliberately small subset: basic JSON types, required object keys, property types/enums, additional-properties policy, and array item types; it is not a full JSON Schema implementation. `web-fetch` requires the explicit `network.read` permission. It accepts public HTTP(S) URLs on standard ports, blocks non-public resolved addresses and validates redirect destinations, supports text responses only, and caps the response body at 1 MB. It does not run JavaScript or automate authenticated browser sessions.
 
-All 200 plugins are local standard-library operations. No cloud account, API
-key, network access, or MCP server is required. The ZIP inspector lists entries
+Most plugins are local standard-library operations. The `web-fetch` plugin is the
+exception: it requires an explicit `network.read` grant and internet access. No cloud
+account, API key, or MCP server is required for the local tools. The ZIP inspector lists entries
 but does not extract them. URL parsing does not make requests. File access is
 permission-gated, but plugins execute as trusted in-process Python and are not
 a hardened sandbox. Review plugin code and grant only the permissions needed.

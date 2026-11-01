@@ -58,11 +58,12 @@ python -m unittest tests.test_builtin_catalog -v
 Plug now includes a local plugin SDK and registry, a portable `SKILL.md` loader,
 scaffold builders for both extensions, deterministic context-based selection,
 and a local SQLite memory store. See [Plugins and Skills](docs/PLUGINS-AND-SKILLS.md)
-for formats, usage boundaries, and current limitations.
+for formats, usage boundaries, and current limitations. See the [capability matrix](docs/CAPABILITY-MATRIX.md) for what works locally and what requires an external tool.
 
 Plugin code is trusted Python executed in-process, not sandboxed. Plugins are
 disabled by default and require explicit permission grants. Skill helper scripts
 are scaffolds and must be reviewed before execution. The current router uses
-keyword overlap; it is not yet an LLM-based semantic router. The 200-plugin and
-200-skill catalog is a target, not a claim that 200 live integrations are already
-implemented.
+keyword overlap; it is not yet an LLM-based semantic router. The catalog contains 200 first-party plugin packages and 200 task-specific skill
+packages. This is not a claim that 200 third-party services or live AI integrations
+are connected. Plugins are executable local tools; skills are instruction packages
+that guide an agent and may require additional tools for external actions.
