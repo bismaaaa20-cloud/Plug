@@ -1,0 +1,17 @@
+{
+  "id": "text-mask-secrets",
+  "name": "Secret Masker",
+  "version": "1.0.0",
+  "description": "Mask likely credentials in text before sharing or logging.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "secret",
+    "mask",
+    "redact",
+    "token"
+  ]
+}

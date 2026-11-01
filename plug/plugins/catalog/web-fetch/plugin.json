@@ -1,0 +1,19 @@
+{
+  "id": "web-fetch",
+  "name": "Public Web Page Reader",
+  "version": "1.0.0",
+  "description": "Fetch public HTTP(S) page text; requires network.read and does not run JavaScript.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "network-read"
+  ],
+  "permissions": [
+    "network.read"
+  ],
+  "keywords": [
+    "web",
+    "fetch",
+    "page",
+    "http"
+  ]
+}

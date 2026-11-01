@@ -1,0 +1,16 @@
+{
+  "id": "csv-sort",
+  "name": "CSV Sorter",
+  "version": "1.0.0",
+  "description": "Sort CSV rows by a selected column.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "sort",
+    "rows"
+  ]
+}

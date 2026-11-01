@@ -1,0 +1,16 @@
+{
+  "id": "csv-column-select",
+  "name": "CSV Column Selector",
+  "version": "1.0.0",
+  "description": "Select and reorder requested CSV columns.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "columns",
+    "select"
+  ]
+}

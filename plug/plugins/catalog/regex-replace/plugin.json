@@ -1,0 +1,16 @@
+{
+  "id": "regex-replace",
+  "name": "Regex Replacer",
+  "version": "1.0.0",
+  "description": "Replace regex matches with a supplied replacement string.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "regex",
+    "replace",
+    "pattern"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "url-query-parse",
+  "name": "URL Query Parser",
+  "version": "1.0.0",
+  "description": "Parse URL query parameters into a structured mapping.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "url",
+    "query",
+    "parameters"
+  ]
+}

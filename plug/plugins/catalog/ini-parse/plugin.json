@@ -1,0 +1,16 @@
+{
+  "id": "ini-parse",
+  "name": "INI Configuration Reader",
+  "version": "1.0.0",
+  "description": "Parse INI sections and key-value settings.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "ini",
+    "config",
+    "parse"
+  ]
+}

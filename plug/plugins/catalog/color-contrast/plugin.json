@@ -1,0 +1,16 @@
+{
+  "id": "color-contrast",
+  "name": "Color Contrast Checker",
+  "version": "1.0.0",
+  "description": "Calculate WCAG contrast ratio between two hexadecimal colors.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "color",
+    "contrast",
+    "accessibility"
+  ]
+}

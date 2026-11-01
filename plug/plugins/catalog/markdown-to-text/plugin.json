@@ -1,0 +1,15 @@
+{
+  "id": "markdown-to-text",
+  "name": "Markdown Plain Text",
+  "version": "1.0.0",
+  "description": "Convert Markdown source into readable plain text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "markdown",
+    "plain text"
+  ]
+}

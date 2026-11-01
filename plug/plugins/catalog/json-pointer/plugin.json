@@ -1,0 +1,16 @@
+{
+  "id": "json-pointer",
+  "name": "JSON Pointer Lookup",
+  "version": "1.0.0",
+  "description": "Look up nested JSON values using a slash-separated pointer.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "pointer",
+    "lookup"
+  ]
+}

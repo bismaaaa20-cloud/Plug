@@ -1,0 +1,16 @@
+{
+  "id": "html-clean",
+  "name": "HTML Cleaner",
+  "version": "1.0.0",
+  "description": "Convert HTML source into text while skipping script and style blocks.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "html",
+    "clean",
+    "plain text"
+  ]
+}

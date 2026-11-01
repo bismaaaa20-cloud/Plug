@@ -1,0 +1,15 @@
+{
+  "id": "markdown-table",
+  "name": "Markdown Table Builder",
+  "version": "1.0.0",
+  "description": "Build a Markdown table from headers and rows.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "markdown",
+    "table"
+  ]
+}

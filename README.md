@@ -38,10 +38,10 @@ python -m unittest discover -s tests -v
 No API key is needed to use the planning and allocation core. Any future
 integration must document its connection method and permissions explicitly.
 
-## Built-in catalog (35 plugins + 35 skills)
+## Built-in catalog (50 plugins + 50 skills)
 
-The repository now contains 35 local plugin packages under
-`plug/plugins/catalog/` and 35 skill packages under
+The repository now contains 50 local plugin packages under
+`plug/plugins/catalog/` and 50 skill packages under
 `plug/skills/catalog/`. Each plugin has a manifest and executable entrypoint;
 each skill has a `SKILL.md` and helper script. See
 [Built-in catalog documentation](docs/BUILTIN-CATALOG.md).
@@ -63,6 +63,6 @@ for formats, usage boundaries, and current limitations.
 Plugin code is trusted Python executed in-process, not sandboxed. Plugins are
 disabled by default and require explicit permission grants. Skill helper scripts
 are scaffolds and must be reviewed before execution. The current router uses
-keyword overlap; it is not yet an LLM-based semantic router. The 100-plugin and
-100-skill catalog is a target, not a claim that 200 live integrations are already
+keyword overlap; it is not yet an LLM-based semantic router. The 200-plugin and
+200-skill catalog is a target, not a claim that 200 live integrations are already
 implemented.

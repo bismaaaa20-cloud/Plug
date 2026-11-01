@@ -1,0 +1,16 @@
+{
+  "id": "json-merge",
+  "name": "JSON Object Merger",
+  "version": "1.0.0",
+  "description": "Merge two JSON objects; right-side keys take precedence.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "merge",
+    "combine"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "csv-dedupe",
+  "name": "CSV Deduplicator",
+  "version": "1.0.0",
+  "description": "Remove duplicate CSV rows based on selected columns.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "dedupe",
+    "duplicate"
+  ]
+}

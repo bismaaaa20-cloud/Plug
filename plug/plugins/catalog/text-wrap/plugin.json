@@ -1,0 +1,16 @@
+{
+  "id": "text-wrap",
+  "name": "Text Wrapper",
+  "version": "1.0.0",
+  "description": "Wrap text paragraphs to a configurable width.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "wrap",
+    "format"
+  ]
+}
