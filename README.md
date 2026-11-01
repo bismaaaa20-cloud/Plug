@@ -37,3 +37,17 @@ python -m unittest discover -s tests -v
 
 No API key is needed to use the planning and allocation core. Any future
 integration must document its connection method and permissions explicitly.
+
+## Local extensions (initial foundation)
+
+Plug now includes a local plugin SDK and registry, a portable `SKILL.md` loader,
+scaffold builders for both extensions, deterministic context-based selection,
+and a local SQLite memory store. See [Plugins and Skills](docs/PLUGINS-AND-SKILLS.md)
+for formats, usage boundaries, and current limitations.
+
+Plugin code is trusted Python executed in-process, not sandboxed. Plugins are
+disabled by default and require explicit permission grants. Skill helper scripts
+are scaffolds and must be reviewed before execution. The current router uses
+keyword overlap; it is not yet an LLM-based semantic router. The 100-plugin and
+100-skill catalog is a target, not a claim that 200 live integrations are already
+implemented.
