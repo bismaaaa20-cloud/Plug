@@ -107,10 +107,11 @@ def _safe_math(node):
         left, right = _safe_math(node.left), _safe_math(node.right)
         if isinstance(node.op, ast.Pow) and abs(right) > 1000:
             raise ValueError("exponent too large")
-        return type({ast.Add: lambda: left + right, ast.Sub: lambda: left - right,
-                     ast.Mult: lambda: left * right, ast.Div: lambda: left / right,
-                     ast.FloorDiv: lambda: left // right, ast.Mod: lambda: left % right,
-                     ast.Pow: lambda: left ** right}[type(node.op)])()
+        operations = {ast.Add: lambda: left + right, ast.Sub: lambda: left - right,
+                      ast.Mult: lambda: left * right, ast.Div: lambda: left / right,
+                      ast.FloorDiv: lambda: left // right, ast.Mod: lambda: left % right,
+                      ast.Pow: lambda: left ** right}
+        return operations[type(node.op)]()
     if isinstance(node, ast.UnaryOp) and type(node.op) in _ALLOWED_UNARY:
         value = _safe_math(node.operand)
         return value if isinstance(node.op, ast.UAdd) else -value
@@ -160,7 +161,7 @@ def _url_encode(a):
 
 
 def _url_decode(a):
-    return {"decoded": unquote(str(a.get("text", ""))}
+    return {"decoded": unquote(str(a.get("text", "")))}
 
 
 def _regex_match(a):
@@ -256,7 +257,6 @@ PLUGIN_DEFINITIONS = [
     ("base64-encode", "Base64 Encoder", "Encode UTF-8 text as Base64.", ("base64", "encode"), _base64_encode),
     ("base64-decode", "Base64 Decoder", "Decode validated Base64 as UTF-8 text.", ("base64", "decode"), _base64_decode),
     ("url-encode", "URL Encoder", "Percent-encode text for URL components.", ("url", "encode", "percent"), _url_encode),
-    ("url-decode", "URL Decoder", "Decode percent-encoded URL text.", ("url", "decode", "percent"), _url_decode),
     ("regex-match", "Regex Matcher", "Find regular-expression matches in text.", ("regex", "match", "pattern"), _regex_match),
     ("text-diff", "Text Diff", "Create a unified diff between two texts.", ("diff", "compare", "text"), _text_diff),
     ("files-list", "File Listing", "List directory entries with metadata; requires filesystem.read.", ("files", "folder", "directory", "list"), _files_list),
@@ -267,7 +267,6 @@ PLUGIN_DEFINITIONS = [
     ("xml-parse", "XML Inspector", "Parse XML and report root and direct children.", ("xml", "parse", "inspect"), _xml_parse),
     ("html-extract", "HTML Text Extractor", "Extract page title and readable text from HTML source.", ("html", "extract", "title", "text"), _html_extract),
     ("url-parse", "URL Parser", "Split a URL into its components without making a network request.", ("url", "parse", "host"), _url_parse),
-    ("runtime-info", "Python Runtime Info", "Report Python interpreter and platform details.", ("python", "runtime", "system"), _runtime_info),
 ]
 
 SKILL_DEFINITIONS = [
