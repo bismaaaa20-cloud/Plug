@@ -134,8 +134,21 @@ class BuiltinCatalogTests(unittest.TestCase):
             registry.enable("web-fetch")
             denied = asyncio.run(registry.execute("web-fetch", arguments={"url": "https://example.com"}))
             self.assertFalse(denied.ok)
-            granted = asyncio.run(registry.execute("web-fetch", granted_permissions={"network.read"}, arguments={"url": "https://example.com"}))
+            with patch("plug.builtin_catalog._web_fetch", return_value={"status": 200, "text": "fixture"}):
+                granted = asyncio.run(registry.execute("web-fetch", granted_permissions={"network.read"}, arguments={"url": "https://example.com"}))
             self.assertTrue(granted.ok)
+
+    def test_web_fetch_blocks_private_addresses(self):
+        from plug.builtin_catalog import _web_fetch
+
+        class Context:
+            def require(self, permission):
+                self.permission = permission
+
+        context = Context()
+        with self.assertRaises(ValueError):
+            _web_fetch({"url": "http://127.0.0.1/"}, context)
+        self.assertEqual(context.permission, "network.read")
 
     def test_safe_calculator_rejects_code_execution(self):
         with self.assertRaises((ValueError, SyntaxError)):
