@@ -112,6 +112,17 @@ class BuiltinCatalogTests(unittest.TestCase):
                 {"expression": "__import__('os').system('echo unsafe')"},
             )
 
+    def test_checked_in_catalogs_are_discoverable_and_default_install_is_safe(self):
+        root = Path(__file__).resolve().parents[1]
+        plugins = PluginRegistry()
+        skills = SkillRegistry()
+        self.assertEqual(len(plugins.discover(root / "plug" / "plugins" / "catalog")), 25)
+        self.assertEqual(len(skills.discover(root / "plug" / "skills" / "catalog")), 25)
+        result = install_builtin_catalog()
+        self.assertTrue(result["already_installed"])
+        self.assertEqual(result["plugins"], 25)
+        self.assertEqual(result["skills"], 25)
+
     def test_installer_refuses_to_overwrite_existing_catalog(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
