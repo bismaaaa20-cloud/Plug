@@ -1,0 +1,16 @@
+{
+  "id": "number-standard-deviation",
+  "name": "Standard Deviation",
+  "version": "1.0.0",
+  "description": "Calculate population or sample standard deviation.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "number",
+    "standard deviation",
+    "statistics"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "number-prime",
+  "name": "Prime Number Checker",
+  "version": "1.0.0",
+  "description": "Check whether an integer is prime.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "number",
+    "prime",
+    "math"
+  ]
+}

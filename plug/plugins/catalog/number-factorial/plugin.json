@@ -1,0 +1,16 @@
+{
+  "id": "number-factorial",
+  "name": "Factorial Calculator",
+  "version": "1.0.0",
+  "description": "Calculate factorial for an integer from 0 through 1000.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "number",
+    "factorial",
+    "math"
+  ]
+}

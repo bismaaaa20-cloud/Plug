@@ -1,0 +1,16 @@
+{
+  "id": "number-mode",
+  "name": "Number Mode",
+  "version": "1.0.0",
+  "description": "Find the most frequent numeric value or values.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "number",
+    "mode",
+    "statistics"
+  ]
+}

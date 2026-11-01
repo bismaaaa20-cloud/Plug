@@ -1,0 +1,16 @@
+{
+  "id": "csv-merge",
+  "name": "CSV Merger",
+  "version": "1.0.0",
+  "description": "Append rows from two CSV inputs when their headers match.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "merge",
+    "combine"
+  ]
+}

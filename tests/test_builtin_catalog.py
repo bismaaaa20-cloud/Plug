@@ -19,28 +19,28 @@ from plug.skills.loader import SkillRegistry
 
 
 class BuiltinCatalogTests(unittest.TestCase):
-    def test_catalog_has_exactly_75_plugins_and_75_skills(self):
-        self.assertEqual(len(PLUGIN_DEFINITIONS), 75)
-        self.assertEqual(len(SKILL_DEFINITIONS), 75)
-        self.assertEqual(len({item[0] for item in PLUGIN_DEFINITIONS}), 75)
-        self.assertEqual(len({item[0] for item in SKILL_DEFINITIONS}), 75)
+    def test_catalog_has_exactly_100_plugins_and_100_skills(self):
+        self.assertEqual(len(PLUGIN_DEFINITIONS), 100)
+        self.assertEqual(len(SKILL_DEFINITIONS), 100)
+        self.assertEqual(len({item[0] for item in PLUGIN_DEFINITIONS}), 100)
+        self.assertEqual(len({item[0] for item in SKILL_DEFINITIONS}), 100)
 
     def test_installer_materializes_all_items_and_discovery_finds_them(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             plugin_root, skill_root = root / "plugins", root / "skills"
             result = install_builtin_catalog(plugin_root, skill_root)
-            self.assertEqual(result["plugins"], 75)
-            self.assertEqual(result["skills"], 75)
-            self.assertEqual(len(list(plugin_root.glob("*/plugin.json"))), 75)
-            self.assertEqual(len(list(skill_root.glob("*/SKILL.md"))), 75)
-            self.assertEqual(len(list(skill_root.glob("*/scripts/main.py"))), 75)
+            self.assertEqual(result["plugins"], 100)
+            self.assertEqual(result["skills"], 100)
+            self.assertEqual(len(list(plugin_root.glob("*/plugin.json"))), 100)
+            self.assertEqual(len(list(skill_root.glob("*/SKILL.md"))), 100)
+            self.assertEqual(len(list(skill_root.glob("*/scripts/main.py"))), 100)
             plugins = PluginRegistry()
             plugins.discover(plugin_root)
-            self.assertEqual(len(plugins.names()), 75)
+            self.assertEqual(len(plugins.names()), 100)
             skills = SkillRegistry()
             skills.discover(skill_root)
-            self.assertEqual(len(skills.names()), 75)
+            self.assertEqual(len(skills.names()), 100)
 
     def test_all_plugin_handlers_execute(self):
         with tempfile.TemporaryDirectory() as archive_dir:
@@ -123,6 +123,30 @@ class BuiltinCatalogTests(unittest.TestCase):
                 "csv-transpose": {"csv": "a,b\n1,2\n"},
                 "number-stats": {"values": [1, 2, 3]},
                 "number-percentile": {"values": [1, 2, 3, 4], "percentile": 75},
+                "json-escape-string": {"text": "hello"},
+                "json-unescape-string": {"json_string": "\"hello\""},
+                "json-array-filter": {"items": [{"x": 1}, {"x": 2}], "key": "x", "equals": 2},
+                "json-array-project": {"items": [{"a": 1, "b": 2}], "fields": ["b"]},
+                "json-diff": {"before": {"a": 1}, "after": {"a": 2}},
+                "csv-to-markdown": {"csv": "a,b\n1,2\n"},
+                "csv-merge": {"first": "a\n1\n", "second": "a\n2\n"},
+                "csv-unique-count": {"csv": "x\na\nb\na\n", "column": "x"},
+                "csv-sample": {"csv": "x\n1\n2\n3\n", "count": 2},
+                "number-standard-deviation": {"values": [1, 2, 3]},
+                "number-mode": {"values": [1, 2, 2, 3]},
+                "number-round": {"value": 3.14159, "places": 2},
+                "number-clamp": {"value": 5, "minimum": 0, "maximum": 3},
+                "number-factorial": {"value": 5},
+                "number-prime": {"value": 17},
+                "number-range": {"start": 1, "stop": 5},
+                "number-base-convert": {"value": 255, "base": 16},
+                "percentage-calc": {"value": 200, "percent": 15},
+                "unit-convert": {"value": 1, "from": "km", "to": "m"},
+                "color-hex-rgb": {"hex": "#FF8800"},
+                "color-rgb-hex": {"r": 255, "g": 136, "b": 0},
+                "ip-cidr-inspect": {"cidr": "192.168.1.0/24"},
+                "date-weekday": {"date": "2026-01-01"},
+                "date-add-days": {"date": "2026-01-01", "days": 7},
             }
 
             class Context:
@@ -186,12 +210,12 @@ class BuiltinCatalogTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         plugins = PluginRegistry()
         skills = SkillRegistry()
-        self.assertEqual(len(plugins.discover(root / "plug" / "plugins" / "catalog")), 75)
-        self.assertEqual(len(skills.discover(root / "plug" / "skills" / "catalog")), 75)
+        self.assertEqual(len(plugins.discover(root / "plug" / "plugins" / "catalog")), 100)
+        self.assertEqual(len(skills.discover(root / "plug" / "skills" / "catalog")), 100)
         result = install_builtin_catalog()
         self.assertTrue(result["already_installed"])
-        self.assertEqual(result["plugins"], 75)
-        self.assertEqual(result["skills"], 75)
+        self.assertEqual(result["plugins"], 100)
+        self.assertEqual(result["skills"], 100)
 
     def test_installer_refuses_to_overwrite_existing_catalog(self):
         with tempfile.TemporaryDirectory() as temp:

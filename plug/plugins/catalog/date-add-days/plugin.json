@@ -1,0 +1,16 @@
+{
+  "id": "date-add-days",
+  "name": "Date Arithmetic",
+  "version": "1.0.0",
+  "description": "Add or subtract a number of days from an ISO date.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "date",
+    "add days",
+    "calendar"
+  ]
+}

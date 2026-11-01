@@ -1,0 +1,16 @@
+{
+  "id": "color-hex-rgb",
+  "name": "Hex to RGB Converter",
+  "version": "1.0.0",
+  "description": "Convert a hexadecimal color into red, green, and blue channels.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "color",
+    "hex",
+    "rgb"
+  ]
+}

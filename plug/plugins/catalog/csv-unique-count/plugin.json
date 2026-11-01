@@ -1,0 +1,16 @@
+{
+  "id": "csv-unique-count",
+  "name": "CSV Unique Counter",
+  "version": "1.0.0",
+  "description": "Count distinct values in a selected CSV column.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "unique",
+    "count"
+  ]
+}

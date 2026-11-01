@@ -1,0 +1,16 @@
+{
+  "id": "number-base-convert",
+  "name": "Number Base Converter",
+  "version": "1.0.0",
+  "description": "Convert integers between bases 2 and 36.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "number",
+    "base",
+    "convert"
+  ]
+}

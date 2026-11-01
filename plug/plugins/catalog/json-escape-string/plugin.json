@@ -1,0 +1,16 @@
+{
+  "id": "json-escape-string",
+  "name": "JSON String Escaper",
+  "version": "1.0.0",
+  "description": "Encode plain text as a valid JSON string literal.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "escape",
+    "string"
+  ]
+}

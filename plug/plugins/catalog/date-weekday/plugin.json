@@ -1,0 +1,16 @@
+{
+  "id": "date-weekday",
+  "name": "Weekday Calculator",
+  "version": "1.0.0",
+  "description": "Return the weekday name for an ISO date.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "date",
+    "weekday",
+    "calendar"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "ip-cidr-inspect",
+  "name": "CIDR Network Inspector",
+  "version": "1.0.0",
+  "description": "Summarize a CIDR network range and host counts.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "ip",
+    "cidr",
+    "network"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "json-array-project",
+  "name": "JSON Array Projector",
+  "version": "1.0.0",
+  "description": "Select named fields from each object in a JSON array.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "array",
+    "project",
+    "select"
+  ]
+}

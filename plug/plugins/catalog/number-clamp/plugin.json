@@ -1,0 +1,16 @@
+{
+  "id": "number-clamp",
+  "name": "Number Clamp",
+  "version": "1.0.0",
+  "description": "Clamp a numeric value between inclusive minimum and maximum bounds.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "number",
+    "clamp",
+    "limit"
+  ]
+}

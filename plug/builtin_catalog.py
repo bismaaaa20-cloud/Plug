@@ -1,4 +1,4 @@
-"""First-party Plug catalog: 75 plugins and 75 task-specific skills.
+"""First-party Plug catalog: 100 plugins and 100 task-specific skills.
 
 Run `python -m plug.builtin_catalog --install` to materialize the catalog under
 `plug/plugins/catalog` and `plug/skills/catalog`.
@@ -669,6 +669,179 @@ def _number_percentile(a):
     result = values[low] if low == high else values[low] + (values[high] - values[low]) * (position - low)
     return {"percentile": percentile, "value": result}
 
+def _json_escape_string(a):
+    return {"json_string": json.dumps(str(a.get("text", "")), ensure_ascii=False)}
+
+def _json_unescape_string(a):
+    value = json.loads(str(a.get("json_string", "")))
+    if not isinstance(value, str): raise ValueError("input must be a JSON string literal")
+    return {"text": value}
+
+def _json_array_filter(a):
+    rows = a.get("items", a.get("json", []))
+    if isinstance(rows, str): rows = json.loads(rows)
+    if not isinstance(rows, list): raise ValueError("input must be a JSON array")
+    key, wanted = str(a.get("key", "")), a.get("equals")
+    selected = [row for row in rows if isinstance(row, dict) and str(row.get(key)) == str(wanted)]
+    return {"items": selected, "matched": len(selected), "total": len(rows)}
+
+def _json_array_project(a):
+    rows, fields = a.get("items", []), a.get("fields", [])
+    if isinstance(rows, str): rows = json.loads(rows)
+    if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+        raise ValueError("items must be an array of JSON objects")
+    if not fields: raise ValueError("fields are required")
+    result = [{key: row.get(key) for key in fields} for row in rows]
+    return {"items": result, "count": len(result)}
+
+def _json_diff(a):
+    left, right = a.get("before"), a.get("after")
+    if isinstance(left, str): left = json.loads(left)
+    if isinstance(right, str): right = json.loads(right)
+    ltxt = json.dumps(left, ensure_ascii=False, indent=2, sort_keys=True).splitlines(True)
+    rtxt = json.dumps(right, ensure_ascii=False, indent=2, sort_keys=True).splitlines(True)
+    return {"diff": "".join(difflib.unified_diff(ltxt, rtxt, fromfile="before", tofile="after"))}
+
+def _csv_to_markdown(a):
+    reader = csv.reader(io.StringIO(str(a.get("csv", ""))))
+    rows = list(reader)
+    if not rows: return {"markdown": "", "rows": 0}
+    escaped = [[cell.replace("|", "\\|").replace("\n", " ") for cell in row] for row in rows]
+    width = len(escaped[0])
+    if any(len(row) != width for row in escaped): raise ValueError("CSV rows have inconsistent column counts")
+    lines = ["| " + " | ".join(escaped[0]) + " |", "| " + " | ".join(["---"] * width) + " |"]
+    lines.extend("| " + " | ".join(row) + " |" for row in escaped[1:])
+    return {"markdown": "\n".join(lines), "rows": len(rows) - 1}
+
+def _csv_merge(a):
+    first, second = csv.DictReader(io.StringIO(str(a.get("first", "")))), csv.DictReader(io.StringIO(str(a.get("second", ""))))
+    fields = first.fieldnames or []
+    if fields != (second.fieldnames or []): raise ValueError("CSV headers must match exactly")
+    rows = list(first) + list(second)
+    output = io.StringIO()
+    if fields:
+        writer = csv.DictWriter(output, fieldnames=fields); writer.writeheader(); writer.writerows(rows)
+    return {"csv": output.getvalue(), "rows": len(rows)}
+
+def _csv_unique_count(a):
+    reader = csv.DictReader(io.StringIO(str(a.get("csv", ""))))
+    rows, column = list(reader), str(a.get("column", ""))
+    if column not in (reader.fieldnames or []): raise ValueError("column not found")
+    counts = {}
+    for row in rows:
+        value = row.get(column, "")
+        counts[value] = counts.get(value, 0) + 1
+    return {"unique": len(counts), "counts": counts}
+
+def _csv_sample(a):
+    import random
+    reader = csv.DictReader(io.StringIO(str(a.get("csv", ""))))
+    fields, rows = reader.fieldnames or [], list(reader)
+    count = max(0, min(int(a.get("count", 5)), len(rows)))
+    indices = sorted(random.Random(int(a.get("seed", 0))).sample(range(len(rows)), count))
+    output = io.StringIO()
+    if fields:
+        writer = csv.DictWriter(output, fieldnames=fields); writer.writeheader(); writer.writerows(rows[i] for i in indices)
+    return {"csv": output.getvalue(), "sampled": count, "total": len(rows)}
+
+def _number_standard_deviation(a):
+    import statistics
+    values = [float(x) for x in a.get("values", [])]
+    sample = bool(a.get("sample", False))
+    if len(values) < (2 if sample else 1): raise ValueError("not enough values")
+    return {"standard_deviation": statistics.stdev(values) if sample else statistics.pstdev(values),
+            "sample": sample, "count": len(values)}
+
+def _number_mode(a):
+    from collections import Counter
+    values = [float(x) for x in a.get("values", [])]
+    if not values: raise ValueError("at least one number is required")
+    counts = Counter(values); maximum = max(counts.values())
+    return {"modes": sorted(value for value, count in counts.items() if count == maximum),
+            "frequency": maximum, "unique_values": len(counts)}
+
+def _number_round(a):
+    places = max(-12, min(int(a.get("places", 2)), 12))
+    value = float(a.get("value", 0))
+    return {"value": round(value, places), "places": places}
+
+def _number_clamp(a):
+    value, low, high = float(a.get("value", 0)), float(a.get("minimum", 0)), float(a.get("maximum", 1))
+    if low > high: raise ValueError("minimum cannot exceed maximum")
+    return {"value": max(low, min(high, value)), "clamped": value < low or value > high}
+
+def _number_factorial(a):
+    value = int(a.get("value", 0))
+    if not 0 <= value <= 1000: raise ValueError("value must be an integer from 0 to 1000")
+    return {"value": value, "factorial": math.factorial(value)}
+
+def _number_prime(a):
+    value = int(a.get("value", 0))
+    if value < 2: return {"value": value, "prime": False}
+    prime = all(value % divisor for divisor in range(2, math.isqrt(value) + 1))
+    return {"value": value, "prime": prime}
+
+def _number_range(a):
+    start, stop, step = int(a.get("start", 0)), int(a.get("stop", 10)), int(a.get("step", 1))
+    if step == 0: raise ValueError("step cannot be zero")
+    values = list(range(start, stop, step))
+    if len(values) > 10000: raise ValueError("range exceeds 10000 values")
+    return {"values": values, "count": len(values)}
+
+def _number_base_convert(a):
+    value, base = int(a.get("value", 0)), int(a.get("base", 2))
+    if not 2 <= base <= 36: raise ValueError("base must be between 2 and 36")
+    alphabet, number = "0123456789abcdefghijklmnopqrstuvwxyz", abs(value)
+    if number == 0: result = "0"
+    else:
+        digits = []
+        while number:
+            number, remainder = divmod(number, base); digits.append(alphabet[remainder])
+        result = "".join(reversed(digits))
+    return {"value": value, "base": base, "converted": ("-" if value < 0 else "") + result}
+
+def _percentage_calc(a):
+    value, percent = float(a.get("value", 0)), float(a.get("percent", 0))
+    return {"value": value, "percent": percent, "result": value * percent / 100}
+
+def _unit_convert(a):
+    value, source, target = float(a.get("value", 0)), str(a.get("from", "" )).lower(), str(a.get("to", "")).lower()
+    length = {"mm": 0.001, "cm": 0.01, "m": 1.0, "km": 1000.0, "in": 0.0254, "ft": 0.3048}
+    if source in length and target in length:
+        result = value * length[source] / length[target]
+    elif source in {"c", "f"} and target in {"c", "f"}:
+        result = value if source == target else value * 9 / 5 + 32 if source == "c" else (value - 32) * 5 / 9
+    else: raise ValueError("supported units: mm, cm, m, km, in, ft, c, f")
+    return {"value": result, "from": source, "to": target}
+
+def _color_hex_rgb(a):
+    raw = str(a.get("hex", "")).lstrip("#")
+    if len(raw) == 3: raw = "".join(ch * 2 for ch in raw)
+    if not re.fullmatch(r"[0-9a-fA-F]{6}", raw): raise ValueError("color must be #RGB or #RRGGBB")
+    return {"r": int(raw[0:2],16), "g": int(raw[2:4],16), "b": int(raw[4:6],16)}
+
+def _color_rgb_hex(a):
+    values = [int(a.get(key, 0)) for key in ("r", "g", "b")]
+    if any(v < 0 or v > 255 for v in values): raise ValueError("RGB channels must be from 0 to 255")
+    return {"hex": "#" + "".join(f"{v:02X}" for v in values)}
+
+def _ip_cidr_inspect(a):
+    import ipaddress
+    network = ipaddress.ip_network(str(a.get("cidr", "")), strict=False)
+    return {"network": str(network), "version": network.version, "prefix": network.prefixlen,
+            "num_addresses": network.num_addresses, "first": str(network.network_address),
+            "last": str(network.broadcast_address)}
+
+def _date_weekday(a):
+    value = datetime.fromisoformat(str(a.get("date", ""))).date()
+    return {"date": value.isoformat(), "weekday": value.strftime("%A"), "weekday_number": value.weekday()}
+
+def _date_add_days(a):
+    from datetime import date, timedelta
+    value = date.fromisoformat(str(a.get("date", "")))
+    result = value + timedelta(days=int(a.get("days", 0)))
+    return {"date": value.isoformat(), "days": int(a.get("days", 0)), "result": result.isoformat()}
+
 PLUGIN_DEFINITIONS = [
     ("text-stats", "Text Statistics", "Count characters, words and lines.", ("text", "count", "words"), _text_stats),
     ("text-clean", "Text Cleaner", "Trim and normalize whitespace.", ("text", "clean", "whitespace"), _text_clean),
@@ -745,6 +918,30 @@ PLUGIN_DEFINITIONS = [
     ("csv-transpose", "CSV Transposer", "Transpose CSV rows and columns.", ["csv","transpose","matrix"], _csv_transpose),
     ("number-stats", "Number Statistics", "Calculate count, mean, median, minimum, maximum, and population variance.", ["number","statistics","mean"], _number_stats),
     ("number-percentile", "Percentile Calculator", "Calculate a linearly interpolated percentile for numeric input.", ["number","percentile","statistics"], _number_percentile),
+    ("json-escape-string", "JSON String Escaper", "Encode plain text as a valid JSON string literal.", ["json","escape","string"], _json_escape_string),
+    ("json-unescape-string", "JSON String Decoder", "Decode a JSON string literal into plain text.", ["json","unescape","string"], _json_unescape_string),
+    ("json-array-filter", "JSON Array Filter", "Filter an array of objects by an exact field value.", ["json","array","filter"], _json_array_filter),
+    ("json-array-project", "JSON Array Projector", "Select named fields from each object in a JSON array.", ["json","array","project","select"], _json_array_project),
+    ("json-diff", "JSON Diff", "Create a readable line diff between two JSON values.", ["json","diff","compare"], _json_diff),
+    ("csv-to-markdown", "CSV to Markdown Table", "Render CSV rows as a Markdown table.", ["csv","markdown","table"], _csv_to_markdown),
+    ("csv-merge", "CSV Merger", "Append rows from two CSV inputs when their headers match.", ["csv","merge","combine"], _csv_merge),
+    ("csv-unique-count", "CSV Unique Counter", "Count distinct values in a selected CSV column.", ["csv","unique","count"], _csv_unique_count),
+    ("csv-sample", "CSV Sampler", "Select a reproducible random sample of CSV rows.", ["csv","sample","random"], _csv_sample),
+    ("number-standard-deviation", "Standard Deviation", "Calculate population or sample standard deviation.", ["number","standard deviation","statistics"], _number_standard_deviation),
+    ("number-mode", "Number Mode", "Find the most frequent numeric value or values.", ["number","mode","statistics"], _number_mode),
+    ("number-round", "Number Rounder", "Round a number to a configurable number of decimal places.", ["number","round","decimal"], _number_round),
+    ("number-clamp", "Number Clamp", "Clamp a numeric value between inclusive minimum and maximum bounds.", ["number","clamp","limit"], _number_clamp),
+    ("number-factorial", "Factorial Calculator", "Calculate factorial for an integer from 0 through 1000.", ["number","factorial","math"], _number_factorial),
+    ("number-prime", "Prime Number Checker", "Check whether an integer is prime.", ["number","prime","math"], _number_prime),
+    ("number-range", "Number Range Generator", "Generate a bounded integer sequence using start, stop, and step.", ["number","range","sequence"], _number_range),
+    ("number-base-convert", "Number Base Converter", "Convert integers between bases 2 and 36.", ["number","base","convert"], _number_base_convert),
+    ("percentage-calc", "Percentage Calculator", "Calculate a percentage of a base value.", ["percentage","percent","math"], _percentage_calc),
+    ("unit-convert", "Unit Converter", "Convert common length or temperature units.", ["unit","convert","length","temperature"], _unit_convert),
+    ("color-hex-rgb", "Hex to RGB Converter", "Convert a hexadecimal color into red, green, and blue channels.", ["color","hex","rgb"], _color_hex_rgb),
+    ("color-rgb-hex", "RGB to Hex Converter", "Convert RGB channel values into a hexadecimal color.", ["color","rgb","hex"], _color_rgb_hex),
+    ("ip-cidr-inspect", "CIDR Network Inspector", "Summarize a CIDR network range and host counts.", ["ip","cidr","network"], _ip_cidr_inspect),
+    ("date-weekday", "Weekday Calculator", "Return the weekday name for an ISO date.", ["date","weekday","calendar"], _date_weekday),
+    ("date-add-days", "Date Arithmetic", "Add or subtract a number of days from an ISO date.", ["date","add days","calendar"], _date_add_days),
 ]
 
 SKILL_DEFINITIONS = [
@@ -823,6 +1020,31 @@ SKILL_DEFINITIONS = [
     ("prompt-testing", "Systematically test prompts across normal and adversarial inputs.", "prompt evaluation, test prompts", "Create a balanced test set with edge cases and ambiguous requests. Define measurable rubric and expected outputs. Compare revisions using identical cases and track regressions. Do not optimize only for cherry-picked examples."),
     ("support-triage", "Classify support requests and route urgent issues safely.", "support triage, ticket priority", "Identify impact, affected users, urgency, and reproducibility. Ask only essential questions. Route security, privacy, billing, or outage issues to the right owner. Never request passwords or secret tokens."),
     ("release-notes", "Write accurate, user-facing release notes from merged changes.", "release notes, changelog writing", "Review merged commits and verified behavior. Group changes into added, improved, fixed, and known issues. Explain user impact in plain language and omit speculative or unshipped work."),
+    ("vector-graphics", "Plan or create clean vector-style graphics and icons.", "vector graphic, SVG illustration, vector design", "Define canvas, geometry, stroke, fills, and reusable shapes. Prefer editable SVG paths and semantic grouping when source is required. Check scaling, contrast, and small-size legibility. Do not call a raster image a vector file."),
+    ("infographic-design", "Turn verified information into a clear visual infographic.", "infographic, visual explainer", "Choose one core message and a simple reading path. Verify numbers and sources before visualizing. Use labels, proportional visual encoding, and accessible contrast. Avoid decorative charts that distort comparisons."),
+    ("iconography-review", "Audit icon consistency and meaning across an interface.", "icon review, icon system, UI icon consistency", "Compare grid, stroke, corner radius, optical size, filled/outline language, and meaning. Identify ambiguous or redundant symbols and recommend corrections. Verify labels for icons that are not universally understood."),
+    ("brand-guidelines", "Write practical brand usage rules for a product or organization.", "brand guideline, brand book, identity rules", "Define logo clear space, minimum size, color values, typography, imagery, voice, and prohibited treatments. Include examples for light/dark backgrounds and small avatars. Keep rules specific enough to enforce."),
+    ("typography-review", "Improve typographic hierarchy, readability, and consistency.", "typography audit, font pairing, type scale", "Inspect type roles, sizes, weights, line lengths, line heights, and responsive scaling. Check language coverage and small-screen readability. Recommend a consistent scale and avoid unnecessary font variety."),
+    ("motion-design", "Plan motion graphics and transitions for a narrative or product.", "motion design, motion graphics, animated sequence", "Define message, pacing, keyframes, transitions, easing, and sound alignment. Keep text readable and use consistent movement grammar. Respect reduced-motion preferences for interface animation."),
+    ("interaction-design", "Specify how controls and user flows behave across states.", "interaction design, UX interactions", "Define triggers, feedback, state transitions, validation, undo, and recovery. Cover keyboard, touch, pointer, and assistive technology. Ensure controls communicate their state and never behave as decorative-only elements."),
+    ("service-design", "Map the end-to-end service experience across people and systems.", "service design, service blueprint", "Map customer actions, frontstage touchpoints, backstage processes, systems, and handoffs. Identify failure points, wait states, and ownership. Define evidence and service-level outcomes for improvements."),
+    ("customer-journey-mapping", "Map customer goals, emotions, touchpoints, and pain points.", "customer journey, journey map", "Specify persona or segment and journey scope. Break the journey into stages, actions, questions, and friction. Distinguish research evidence from assumptions and identify measurable opportunities."),
+    ("competitive-analysis", "Compare products using consistent criteria and evidence.", "competitor analysis, product comparison", "Define the category, audience, and comparison dimensions. Use current primary product information and cite it. Compare features, pricing, positioning, and trade-offs without inventing competitor capabilities."),
+    ("market-research", "Structure market research and assess evidence quality.", "market research, market size, industry analysis", "Define segment, geography, timeframe, and decision. Prefer authoritative datasets and transparent methodologies. Distinguish TAM/SAM/SOM assumptions from measured figures and explain confidence and gaps."),
+    ("technical-diagramming", "Create accurate technical diagrams from system behavior.", "architecture diagram, sequence diagram, flowchart", "Identify actors, boundaries, data flows, and failure paths. Choose a diagram type that answers one question. Label protocols and directions accurately and verify every connection against implementation."),
+    ("architecture-review", "Review a proposed system architecture for fit and risk.", "software architecture review, system design", "Assess requirements, boundaries, dependencies, scalability, resilience, security, and operability. Surface trade-offs and failure modes. Tie recommendations to workload assumptions and avoid speculative complexity."),
+    ("microservice-design", "Design service boundaries and contracts for distributed systems.", "microservice architecture, service boundary", "Start from domain capabilities and data ownership. Define service APIs, consistency, events, retries, idempotency, and observability. Challenge unnecessary service splitting and account for distributed failure."),
+    ("api-design", "Design clear, stable, versionable API contracts.", "REST API design, endpoint contract", "Define resources, methods, schemas, errors, pagination, auth, and idempotency. Use consistent naming and versioning policy. Include example requests/responses and compatibility expectations."),
+    ("security-testing", "Plan authorized security tests for an application.", "security test, penetration test plan", "Confirm scope and authorization. Prioritize input validation, auth, access control, secrets, dependency risk, and abuse cases. Use safe test environments and report reproducible findings without destructive exploitation."),
+    ("threat-modeling", "Map threats and mitigations across application trust boundaries.", "threat model, STRIDE, attack surface", "Identify assets, actors, entry points, trust boundaries, and abuse cases. Rate impact and likelihood. Propose mitigations and residual risk. Revisit the model when architecture or data flows change."),
+    ("incident-postmortem", "Write a blameless incident review with actionable prevention.", "postmortem, incident review, outage report", "Build a verified timeline and impact summary. Explain contributing factors rather than assigning blame. Record what worked, what failed, and measurable corrective actions with owners and dates."),
+    ("privacy-impact-assessment", "Assess privacy consequences of proposed data processing.", "privacy impact, DPIA, data processing", "Map data categories, purpose, legal/consent assumptions, recipients, storage, retention, and user rights. Minimize data and identify risks and mitigations. Refer legal conclusions to qualified counsel."),
+    ("governance-review", "Review ownership, policy, risk, and accountability for a project.", "governance, policy review, accountability", "Identify decision rights, roles, policy obligations, records, and escalation paths. Test whether controls are measurable and auditable. Separate established obligations from recommendations or unresolved interpretations."),
+    ("data-storytelling", "Communicate data findings with a clear narrative and caveats.", "data storytelling, insight narrative", "Start with the decision or question. Select a small number of defensible findings and visuals. Explain context, uncertainty, and limitations. Keep observation, interpretation, and recommendation distinct."),
+    ("statistical-analysis", "Choose and explain statistical methods for a dataset or question.", "statistics, statistical test, hypothesis test", "Inspect sampling, distributions, missing data, and assumptions. Select methods appropriate to the design. Report effect sizes and uncertainty, not just p-values. Avoid causal claims from observational association."),
+    ("experimentation", "Design controlled experiments and interpret their results.", "experiment design, A/B test", "Define hypothesis, target metric, guardrails, randomization, sample size assumptions, and stopping policy. Check instrumentation and segment balance. Report uncertainty and practical significance."),
+    ("prompt-library-management", "Organize reusable prompts with versioning and evaluation notes.", "prompt library, prompt catalog", "Group prompts by task and owner. Document variables, model assumptions, examples, and known limits. Version revisions and attach a representative evaluation set. Remove stale or duplicate prompt entries."),
+    ("knowledge-base-design", "Design a searchable knowledge base with clear governance.", "knowledge base, FAQ architecture", "Identify audience, recurring questions, source of truth, owners, and review cadence. Use consistent taxonomy, metadata, and article templates. Include freshness indicators and escalation paths when answers are unavailable."),
 ]
 
 def run_builtin(context, arguments):
@@ -838,7 +1060,7 @@ def run_builtin(context, arguments):
 
 
 def install_builtin_catalog(plugin_root=None, skill_root=None):
-    """Materialize all 75 plugins and 75 skills; never overwrite existing files."""
+    """Materialize all 100 plugins and 100 skills; never overwrite existing files."""
     import json as _json
     from pathlib import Path as _Path
     base = _Path(__file__).resolve().parent
@@ -887,7 +1109,7 @@ def install_builtin_catalog(plugin_root=None, skill_root=None):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Install Plug's 75 built-in plugins and 75 skills.")
+    parser = argparse.ArgumentParser(description="Install Plug's 100 built-in plugins and 100 skills.")
     parser.add_argument("--install", action="store_true", help="materialize the bundled catalog")
     args = parser.parse_args()
     if args.install:

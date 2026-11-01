@@ -1,0 +1,16 @@
+{
+  "id": "csv-to-markdown",
+  "name": "CSV to Markdown Table",
+  "version": "1.0.0",
+  "description": "Render CSV rows as a Markdown table.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "markdown",
+    "table"
+  ]
+}

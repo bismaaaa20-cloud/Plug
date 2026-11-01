@@ -1,0 +1,16 @@
+{
+  "id": "json-unescape-string",
+  "name": "JSON String Decoder",
+  "version": "1.0.0",
+  "description": "Decode a JSON string literal into plain text.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "unescape",
+    "string"
+  ]
+}

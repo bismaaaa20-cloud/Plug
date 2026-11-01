@@ -1,0 +1,16 @@
+{
+  "id": "percentage-calc",
+  "name": "Percentage Calculator",
+  "version": "1.0.0",
+  "description": "Calculate a percentage of a base value.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "percentage",
+    "percent",
+    "math"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "number-round",
+  "name": "Number Rounder",
+  "version": "1.0.0",
+  "description": "Round a number to a configurable number of decimal places.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "number",
+    "round",
+    "decimal"
+  ]
+}

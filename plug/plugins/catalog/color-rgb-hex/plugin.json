@@ -1,0 +1,16 @@
+{
+  "id": "color-rgb-hex",
+  "name": "RGB to Hex Converter",
+  "version": "1.0.0",
+  "description": "Convert RGB channel values into a hexadecimal color.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "color",
+    "rgb",
+    "hex"
+  ]
+}

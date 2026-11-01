@@ -1,0 +1,16 @@
+{
+  "id": "json-diff",
+  "name": "JSON Diff",
+  "version": "1.0.0",
+  "description": "Create a readable line diff between two JSON values.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "diff",
+    "compare"
+  ]
+}

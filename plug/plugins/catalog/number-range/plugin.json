@@ -1,0 +1,16 @@
+{
+  "id": "number-range",
+  "name": "Number Range Generator",
+  "version": "1.0.0",
+  "description": "Generate a bounded integer sequence using start, stop, and step.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "number",
+    "range",
+    "sequence"
+  ]
+}

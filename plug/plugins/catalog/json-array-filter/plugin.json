@@ -1,0 +1,16 @@
+{
+  "id": "json-array-filter",
+  "name": "JSON Array Filter",
+  "version": "1.0.0",
+  "description": "Filter an array of objects by an exact field value.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "array",
+    "filter"
+  ]
+}

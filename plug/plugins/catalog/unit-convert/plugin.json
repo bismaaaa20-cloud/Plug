@@ -1,0 +1,17 @@
+{
+  "id": "unit-convert",
+  "name": "Unit Converter",
+  "version": "1.0.0",
+  "description": "Convert common length or temperature units.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "unit",
+    "convert",
+    "length",
+    "temperature"
+  ]
+}

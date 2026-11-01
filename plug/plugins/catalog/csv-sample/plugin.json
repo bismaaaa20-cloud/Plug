@@ -1,0 +1,16 @@
+{
+  "id": "csv-sample",
+  "name": "CSV Sampler",
+  "version": "1.0.0",
+  "description": "Select a reproducible random sample of CSV rows.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "sample",
+    "random"
+  ]
+}
