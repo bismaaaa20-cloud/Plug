@@ -41,4 +41,4 @@ Create a scaffold with `plug.skills.builder.create_skill(...)`.
 
 ## Current limitations
 
-This foundation does not provide 100 live third-party integrations. External plugins require a real adapter, documented API, credentials, permission review, and integration tests. Catalog entries must not be marked operational until those checks pass. MCP is intentionally not included.
+The repository currently bundles exactly 25 working local plugins and 25 task skills; see [BUILTIN-CATALOG.md](BUILTIN-CATALOG.md) for the complete inventory and tests. These are local tools and instruction packages, not 25 live third-party account integrations. External services still require a real adapter, documented API, credentials, permission review, and integration tests. Catalog entries must not be marked connected until those checks pass. MCP is intentionally not included.
