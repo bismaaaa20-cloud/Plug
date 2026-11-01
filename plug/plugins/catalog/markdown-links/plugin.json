@@ -1,0 +1,16 @@
+{
+  "id": "markdown-links",
+  "name": "Markdown Link Extractor",
+  "version": "1.0.0",
+  "description": "Extract Markdown link labels and destinations.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "markdown",
+    "links",
+    "extract"
+  ]
+}

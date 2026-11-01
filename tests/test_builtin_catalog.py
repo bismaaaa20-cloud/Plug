@@ -18,9 +18,9 @@ from plug.skills.loader import SkillRegistry
 
 
 class BuiltinCatalogTests(unittest.TestCase):
-    def test_catalog_has_exactly_25_plugins_and_25_skills(self):
-        self.assertEqual(len(PLUGIN_DEFINITIONS), 25)
-        self.assertEqual(len(SKILL_DEFINITIONS), 25)
+    def test_catalog_has_exactly_35_plugins_and_35_skills(self):
+        self.assertEqual(len(PLUGIN_DEFINITIONS), 35)
+        self.assertEqual(len(SKILL_DEFINITIONS), 35)
         self.assertEqual(len({item[0] for item in PLUGIN_DEFINITIONS}), 25)
         self.assertEqual(len({item[0] for item in SKILL_DEFINITIONS}), 25)
 
@@ -29,17 +29,17 @@ class BuiltinCatalogTests(unittest.TestCase):
             root = Path(temp)
             plugin_root, skill_root = root / "plugins", root / "skills"
             result = install_builtin_catalog(plugin_root, skill_root)
-            self.assertEqual(result["plugins"], 25)
-            self.assertEqual(result["skills"], 25)
-            self.assertEqual(len(list(plugin_root.glob("*/plugin.json"))), 25)
-            self.assertEqual(len(list(skill_root.glob("*/SKILL.md"))), 25)
-            self.assertEqual(len(list(skill_root.glob("*/scripts/main.py"))), 25)
+            self.assertEqual(result["plugins"], 35)
+            self.assertEqual(result["skills"], 35)
+            self.assertEqual(len(list(plugin_root.glob("*/plugin.json"))), 35)
+            self.assertEqual(len(list(skill_root.glob("*/SKILL.md"))), 35)
+            self.assertEqual(len(list(skill_root.glob("*/scripts/main.py"))), 35)
             plugins = PluginRegistry()
             plugins.discover(plugin_root)
-            self.assertEqual(len(plugins.names()), 25)
+            self.assertEqual(len(plugins.names()), 35)
             skills = SkillRegistry()
             skills.discover(skill_root)
-            self.assertEqual(len(skills.names()), 25)
+            self.assertEqual(len(skills.names()), 35)
 
     def test_all_plugin_handlers_execute(self):
         with tempfile.TemporaryDirectory() as archive_dir:
@@ -72,6 +72,16 @@ class BuiltinCatalogTests(unittest.TestCase):
                 "xml-parse": {"xml": "<root><child /></root>"},
                 "html-extract": {"html": "<title>Test</title><p>Hello</p>"},
                 "url-parse": {"url": "https://example.com/path"},
+                "markdown-toc": {"markdown": "# Intro\\n## Setup"},
+                "markdown-links": {"markdown": "[site](https://example.com)"},
+                "text-dedupe-lines": {"text": "a\\nb\\na"},
+                "text-sort-lines": {"text": "z\\na\\nb"},
+                "text-case": {"text": "hello WORLD", "mode": "title"},
+                "word-frequency": {"text": "red blue red"},
+                "html-links": {"html": "<a href='https://example.com'>Example</a>"},
+                "json-flatten": {"data": {"a": {"b": 2}}},
+                "csv-to-json": {"csv": "name,age\\nAda,36\\n"},
+                "toml-parse": {"toml": "name = 'Plug'"},
             }
 
             class Context:
@@ -116,12 +126,12 @@ class BuiltinCatalogTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         plugins = PluginRegistry()
         skills = SkillRegistry()
-        self.assertEqual(len(plugins.discover(root / "plug" / "plugins" / "catalog")), 25)
-        self.assertEqual(len(skills.discover(root / "plug" / "skills" / "catalog")), 25)
+        self.assertEqual(len(plugins.discover(root / "plug" / "plugins" / "catalog")), 35)
+        self.assertEqual(len(skills.discover(root / "plug" / "skills" / "catalog")), 35)
         result = install_builtin_catalog()
         self.assertTrue(result["already_installed"])
-        self.assertEqual(result["plugins"], 25)
-        self.assertEqual(result["skills"], 25)
+        self.assertEqual(result["plugins"], 35)
+        self.assertEqual(result["skills"], 35)
 
     def test_installer_refuses_to_overwrite_existing_catalog(self):
         with tempfile.TemporaryDirectory() as temp:

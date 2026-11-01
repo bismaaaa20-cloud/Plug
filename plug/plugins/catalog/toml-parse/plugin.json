@@ -1,0 +1,16 @@
+{
+  "id": "toml-parse",
+  "name": "TOML Inspector",
+  "version": "1.0.0",
+  "description": "Parse TOML configuration using Python's tomllib.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "toml",
+    "config",
+    "parse"
+  ]
+}

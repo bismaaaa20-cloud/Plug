@@ -1,0 +1,16 @@
+{
+  "id": "text-case",
+  "name": "Text Case Converter",
+  "version": "1.0.0",
+  "description": "Convert text into upper, lower, title, or sentence case.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "case",
+    "uppercase"
+  ]
+}

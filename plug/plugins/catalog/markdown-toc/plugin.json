@@ -1,0 +1,16 @@
+{
+  "id": "markdown-toc",
+  "name": "Markdown TOC",
+  "version": "1.0.0",
+  "description": "Build a table of contents from Markdown headings.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "markdown",
+    "heading",
+    "toc"
+  ]
+}

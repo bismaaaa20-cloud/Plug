@@ -1,0 +1,16 @@
+{
+  "id": "text-sort-lines",
+  "name": "Line Sorter",
+  "version": "1.0.0",
+  "description": "Sort text lines alphabetically with optional reverse order.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "sort",
+    "lines"
+  ]
+}

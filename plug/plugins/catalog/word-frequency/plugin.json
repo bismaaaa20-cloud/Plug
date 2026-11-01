@@ -1,0 +1,16 @@
+{
+  "id": "word-frequency",
+  "name": "Word Frequency",
+  "version": "1.0.0",
+  "description": "Count word frequency and return the most common terms.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "word",
+    "frequency",
+    "count"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "text-dedupe-lines",
+  "name": "Line Deduplicator",
+  "version": "1.0.0",
+  "description": "Remove repeated lines and keep their first occurrence.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "dedupe",
+    "lines"
+  ]
+}

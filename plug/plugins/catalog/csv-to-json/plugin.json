@@ -1,0 +1,16 @@
+{
+  "id": "csv-to-json",
+  "name": "CSV to JSON",
+  "version": "1.0.0",
+  "description": "Convert CSV records into a JSON array of objects.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "csv",
+    "json",
+    "convert"
+  ]
+}

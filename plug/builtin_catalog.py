@@ -1,4 +1,4 @@
-"""First-party Plug catalog: 25 working local plugins and 25 practical skills.
+"""First-party Plug catalog: 35 working local plugins and 35 task-specific skills.
 
 Run `python -m plug.builtin_catalog --install` to materialize the catalog under
 `plug/plugins/catalog` and `plug/skills/catalog`.
@@ -241,6 +241,88 @@ def _runtime_info(a):
     return {"python": sys.version.split()[0], "implementation": sys.implementation.name, "platform": sys.platform, "executable": sys.executable}
 
 
+def _markdown_toc(a):
+    lines = []
+    for line in str(a.get("markdown", a.get("text", ""))).splitlines():
+        match = re.match(r"^(#{1,6})\\s+(.+?)\\s*#*\\s*$", line)
+        if match:
+            title = match.group(2).strip()
+            slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+            lines.append("  " * (len(match.group(1)) - 1) + f"- [{title}](#{slug})")
+    return {"toc": "\\n".join(lines), "count": len(lines)}
+
+def _markdown_links(a):
+    source = str(a.get("markdown", a.get("text", "")))
+    pattern = r"(?<!!)\\[([^\\]]+)\\]\\(([^)]+)\\)"
+    links = [{"label": m.group(1), "url": m.group(2)} for m in re.finditer(pattern, source)]
+    return {"links": links, "count": len(links)}
+
+def _text_dedupe_lines(a):
+    lines = str(a.get("text", "")).splitlines()
+    seen, result = set(), []
+    for line in lines:
+        key = line if a.get("case_sensitive", True) else line.casefold()
+        if key not in seen:
+            seen.add(key)
+            result.append(line)
+    return {"text": "\\n".join(result), "removed": len(lines) - len(result)}
+
+def _text_sort_lines(a):
+    lines = str(a.get("text", "")).splitlines()
+    result = sorted(lines, key=str.casefold, reverse=bool(a.get("reverse", False)))
+    return {"text": "\\n".join(result)}
+
+def _text_case(a):
+    value, mode = str(a.get("text", "")), str(a.get("mode", "lower"))
+    choices = {"upper": value.upper(), "lower": value.lower(), "title": value.title(),
+               "sentence": value[:1].upper() + value[1:].lower()}
+    if mode not in choices:
+        raise ValueError("mode must be upper, lower, title, or sentence")
+    return {"text": choices[mode]}
+
+def _word_frequency(a):
+    from collections import Counter
+    words = re.findall(r"\\b[\\w']+\\b", str(a.get("text", "")).casefold())
+    limit = max(1, min(int(a.get("limit", 20)), 200))
+    return {"words": [{"word": word, "count": count} for word, count in Counter(words).most_common(limit)],
+            "total": len(words)}
+
+def _html_links(a):
+    source = str(a.get("html", ""))
+    pattern = r"""(?is)<a\\b[^>]*href\\s*=\\s*(['"])(.*?)\\1[^>]*>(.*?)</a>"""
+    links = []
+    for match in re.finditer(pattern, source):
+        label = re.sub(r"(?s)<[^>]+>", " ", match.group(3))
+        links.append({"url": html.unescape(match.group(2)),
+                      "label": re.sub(r"\\s+", " ", html.unescape(label)).strip()})
+    return {"links": links, "count": len(links)}
+
+def _json_flatten(a):
+    obj = a.get("json", a.get("data", {}))
+    if isinstance(obj, str):
+        obj = json.loads(obj)
+    output = {}
+    def walk(value, prefix):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                walk(child, f"{prefix}.{key}" if prefix else str(key))
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                walk(child, f"{prefix}.{index}" if prefix else str(index))
+        else:
+            output[prefix] = value
+    walk(obj, "")
+    return {"flat": output}
+
+def _csv_to_json(a):
+    rows = list(csv.DictReader(io.StringIO(str(a.get("csv", "")))))
+    return {"rows": rows, "count": len(rows), "json": json.dumps(rows, ensure_ascii=False)}
+
+def _toml_parse(a):
+    import tomllib
+    data = tomllib.loads(str(a.get("toml", a.get("text", ""))))
+    return {"data": data, "keys": list(data)}
+
 PLUGIN_DEFINITIONS = [
     ("text-stats", "Text Statistics", "Count characters, words and lines.", ("text", "count", "words"), _text_stats),
     ("text-clean", "Text Cleaner", "Trim and normalize whitespace.", ("text", "clean", "whitespace"), _text_clean),
@@ -267,6 +349,16 @@ PLUGIN_DEFINITIONS = [
     ("xml-parse", "XML Inspector", "Parse XML and report root and direct children.", ("xml", "parse", "inspect"), _xml_parse),
     ("html-extract", "HTML Text Extractor", "Extract page title and readable text from HTML source.", ("html", "extract", "title", "text"), _html_extract),
     ("url-parse", "URL Parser", "Split a URL into its components without making a network request.", ("url", "parse", "host"), _url_parse),
+    ("markdown-toc", "Markdown TOC", "Build a table of contents from Markdown headings.", ["markdown","heading","toc"], _markdown_toc),
+    ("markdown-links", "Markdown Link Extractor", "Extract Markdown link labels and destinations.", ["markdown","links","extract"], _markdown_links),
+    ("text-dedupe-lines", "Line Deduplicator", "Remove repeated lines and keep their first occurrence.", ["text","dedupe","lines"], _text_dedupe_lines),
+    ("text-sort-lines", "Line Sorter", "Sort text lines alphabetically with optional reverse order.", ["text","sort","lines"], _text_sort_lines),
+    ("text-case", "Text Case Converter", "Convert text into upper, lower, title, or sentence case.", ["text","case","uppercase"], _text_case),
+    ("word-frequency", "Word Frequency", "Count word frequency and return the most common terms.", ["word","frequency","count"], _word_frequency),
+    ("html-links", "HTML Link Extractor", "Extract anchor links from HTML source.", ["html","links","href"], _html_links),
+    ("json-flatten", "JSON Flattener", "Flatten nested JSON objects and arrays into dotted paths.", ["json","flatten","nested"], _json_flatten),
+    ("csv-to-json", "CSV to JSON", "Convert CSV records into a JSON array of objects.", ["csv","json","convert"], _csv_to_json),
+    ("toml-parse", "TOML Inspector", "Parse TOML configuration using Python's tomllib.", ["toml","config","parse"], _toml_parse),
 ]
 
 SKILL_DEFINITIONS = [
@@ -295,6 +387,16 @@ SKILL_DEFINITIONS = [
     ("learning-coach", "Explain difficult topics progressively with examples and checks.", "learn, explain, teach, tutorial", "Start from the learner's stated level. Explain one concept at a time, give a concrete example, check understanding, and correct misconceptions without shaming."),
     ("decision-analysis", "Compare options against explicit criteria and trade-offs.", "decide, compare options, pros cons, recommendation", "List options and decision criteria. Distinguish facts from assumptions. Compare trade-offs, identify reversibility, and recommend only when evidence supports it."),
     ("incident-response", "Organize a safe, evidence-led response to technical incidents.", "incident, outage, production issue, recovery", "Stabilize first and preserve evidence. Establish timeline and impact. Avoid destructive actions without approval. Track mitigations, verification, and follow-up prevention."),
+    ("ui-builder", "Design and implement UI layouts, reusable components, and interaction states.", "build UI, interface, dashboard, components", "Confirm target platform and framework. Map the main user flow. Define layout hierarchy, reusable components, responsive breakpoints, and loading, empty, error, and success states. Implement real controls with accessible labels and keyboard or touch behavior. Run available build and interaction tests; do not describe a static mockup as a working application."),
+    ("web-research", "Retrieve and verify information from live websites and primary sources.", "browse web, open website, online research", "Use an available browser or web-search connector. Never claim to open a page without retrieval. Prioritize primary sources, verify dates, compare claims, cite sources, and distinguish public pages from authenticated or blocked content."),
+    ("video-analysis", "Analyze supplied video files or accessible video sources.", "analyze video, watch video, video summary", "Confirm video data or an authorized video-analysis tool is available. Inspect frames with timestamps and transcribe speech only when supported. Report visible scenes and events; separate observation from inference. Never claim to watch an inaccessible link."),
+    ("image-creation", "Create original visual assets from a clear design brief.", "generate image, create artwork, illustration", "Translate the brief into subject, composition, style, palette, aspect ratio, and constraints. Use an available image-generation tool. For edits, change only requested details. State clearly when output is raster rather than editable vector."),
+    ("audio-transcription", "Transcribe accessible audio with speaker turns where possible.", "transcribe audio, speech to text", "Use an available audio transcription capability. Preserve speaker turns when distinguishable and timestamps when supported. Mark uncertain words; do not invent speech or claim to process missing audio."),
+    ("frontend-development", "Build responsive frontend pages and reusable components.", "frontend, HTML CSS JS, React", "Inspect the existing stack. Implement semantic responsive UI, accessible labels, keyboard states, and real interactions. Avoid fake backend behavior. Run lint, build, and tests when available and report exact outcomes."),
+    ("backend-development", "Implement server endpoints, validation, and business logic.", "backend, API server, endpoint", "Confirm framework, authentication, and data model. Define request and response contracts, validation, safe errors, and tests. Keep secrets out of source and logs. Do not describe a mock endpoint as deployed."),
+    ("browser-automation", "Perform authorized multi-step browser workflows.", "browser automation, click website, fill form", "Use a connected browser tool only when available and authorized. Inspect page state before actions. Confirm irreversible steps. Do not bypass CAPTCHAs or access controls; report blocked steps honestly."),
+    ("accessibility-audit", "Review interfaces against practical accessibility requirements.", "accessibility, WCAG, screen reader", "Check semantics, keyboard navigation, focus visibility, labels, alt text, heading order, error messages, and contrast. Treat automated scans as hints, not proof of compliance. Provide severity and concrete fixes."),
+    ("data-visualization", "Choose and create clear charts from structured data.", "chart, graph, visualize data", "Inspect columns, units, missing values, and comparison goal. Choose a suitable chart, label axes, avoid misleading scales, and state limitations. Generate charts only from supplied or retrieved data."),
 ]
 
 def run_builtin(context, arguments):
@@ -312,7 +414,7 @@ def run_builtin(context, arguments):
 
 
 def install_builtin_catalog(plugin_root=None, skill_root=None):
-    """Materialize all 25 plugins and 25 skills; never overwrite existing files."""
+    """Materialize all 35 plugins and 35 skills; never overwrite existing files."""
     import json as _json
     from pathlib import Path as _Path
     base = _Path(__file__).resolve().parent
@@ -361,7 +463,7 @@ def install_builtin_catalog(plugin_root=None, skill_root=None):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Install Plug's 25 built-in plugins and 25 skills.")
+    parser = argparse.ArgumentParser(description="Install Plug's 35 built-in plugins and 35 skills.")
     parser.add_argument("--install", action="store_true", help="materialize the bundled catalog")
     args = parser.parse_args()
     if args.install:

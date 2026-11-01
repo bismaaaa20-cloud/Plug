@@ -1,0 +1,16 @@
+{
+  "id": "json-flatten",
+  "name": "JSON Flattener",
+  "version": "1.0.0",
+  "description": "Flatten nested JSON objects and arrays into dotted paths.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "flatten",
+    "nested"
+  ]
+}
