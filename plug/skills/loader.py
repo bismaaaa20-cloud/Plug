@@ -51,7 +51,7 @@ class SkillRegistry:
                 raise ValueError(f"unknown skill front matter field: {key}")
             if key in fields:
                 raise ValueError(f"duplicate skill front matter field: {key}")
-            fields[key] = value.strip().strip('"\\'')
+            fields[key] = value.strip().strip("\"'")
         name, description = fields.get("name", ""), fields.get("description", "")
         if not name or not description:
             raise ValueError("skill front matter requires name and description")
