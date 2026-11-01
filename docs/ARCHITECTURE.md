@@ -6,6 +6,14 @@
 - `AsyncExecutor` executes dependency layers and runs independent tasks
   concurrently up to a configured limit.
 - `Provider` is an async protocol. Implementations are registered explicitly.
+- `TaskAllocator` matches work to agents using skills, reliability, preference,
+  and current load.
+- `StrategyEngine` selects direct, parallel, pipeline, or collaborative work.
+- `FriendlyGuide` produces constructive, respectful coordination messages.
+
+The teamwork algorithm is independent of transport. An agent may eventually
+connect to a local model, desktop app, or browser session through a supported
+adapter; the current code does not yet automate desktop interfaces.
 
 The executor returns structured outcomes and records exception class names
 only, avoiding persistence of exception messages that may contain sensitive
