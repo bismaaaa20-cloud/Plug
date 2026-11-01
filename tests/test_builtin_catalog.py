@@ -73,28 +73,28 @@ class BuiltinCatalogTests(unittest.TestCase):
                 "xml-parse": {"xml": "<root><child /></root>"},
                 "html-extract": {"html": "<title>Test</title><p>Hello</p>"},
                 "url-parse": {"url": "https://example.com/path"},
-                "markdown-toc": {"markdown": "# Intro\\n## Setup"},
+                "markdown-toc": {"markdown": "# Intro\n## Setup"},
                 "markdown-links": {"markdown": "[site](https://example.com)"},
-                "text-dedupe-lines": {"text": "a\\nb\\na"},
-                "text-sort-lines": {"text": "z\\na\\nb"},
+                "text-dedupe-lines": {"text": "a\nb\na"},
+                "text-sort-lines": {"text": "z\na\nb"},
                 "text-case": {"text": "hello WORLD", "mode": "title"},
                 "word-frequency": {"text": "red blue red"},
                 "html-links": {"html": "<a href='https://example.com'>Example</a>"},
                 "json-flatten": {"data": {"a": {"b": 2}}},
-                "csv-to-json": {"csv": "name,age\\nAda,36\\n"},
+                "csv-to-json": {"csv": "name,age\nAda,36\n"},
                 "toml-parse": {"toml": "name = 'Plug'"},
                 "markdown-table": {"headers": ["name", "score"], "rows": [["Ada", 10]]},
-                "markdown-to-text": {"markdown": "# Title\\n[site](https://example.com)"},
+                "markdown-to-text": {"markdown": "# Title\n[site](https://example.com)"},
                 "text-wrap": {"text": "one two three four", "width": 10},
                 "text-mask-secrets": {"text": "API_KEY=abc123"},
                 "regex-replace": {"pattern": "cat", "replacement": "dog", "text": "cat cat"},
                 "html-clean": {"html": "<p>Hello <b>world</b></p><script>bad()</script>"},
                 "json-merge": {"left": {"a": 1}, "right": {"b": 2}},
                 "json-pointer": {"data": {"user": {"name": "Ada"}}, "pointer": "/user/name"},
-                "csv-column-select": {"csv": "a,b\\n1,2\\n", "columns": "b"},
-                "csv-sort": {"csv": "name\\nZed\\nAda\\n", "column": "name"},
-                "csv-dedupe": {"csv": "id\\n1\\n1\\n2\\n"},
-                "ini-parse": {"ini": "[app]\\nname=Plug"},
+                "csv-column-select": {"csv": "a,b\n1,2\n", "columns": "b"},
+                "csv-sort": {"csv": "name\nZed\nAda\n", "column": "name"},
+                "csv-dedupe": {"csv": "id\n1\n1\n2\n"},
+                "ini-parse": {"ini": "[app]\nname=Plug"},
                 "color-contrast": {"foreground": "#000000", "background": "#FFFFFF"},
                 "web-fetch": {"url": "https://example.com"},
                 "url-query-parse": {"url": "https://example.com/?a=1&b=2"},
@@ -132,8 +132,8 @@ class BuiltinCatalogTests(unittest.TestCase):
                 arguments={"path": __file__}))
             self.assertTrue(result.ok)
             registry.enable("web-fetch")
-            denied = asyncio.run(registry.execute("web-fetch", arguments={"url": "https://example.com"}))
-            self.assertFalse(denied.ok)
+            with self.assertRaises(PermissionError):
+                asyncio.run(registry.execute("web-fetch", arguments={"url": "https://example.com"}))
             with patch("plug.builtin_catalog._web_fetch", return_value={"status": 200, "text": "fixture"}):
                 granted = asyncio.run(registry.execute("web-fetch", granted_permissions={"network.read"}, arguments={"url": "https://example.com"}))
             self.assertTrue(granted.ok)
