@@ -1,0 +1,16 @@
+{
+  "id": "color-hsl-rgb",
+  "name": "HSL to RGB Converter",
+  "version": "1.0.0",
+  "description": "Convert HSL color values to RGB channels.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "color",
+    "hsl",
+    "rgb"
+  ]
+}

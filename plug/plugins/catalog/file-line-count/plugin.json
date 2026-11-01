@@ -1,0 +1,18 @@
+{
+  "id": "file-line-count",
+  "name": "File Line Counter",
+  "version": "1.0.0",
+  "description": "Count UTF-8 text lines and characters; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "file",
+    "line count",
+    "text"
+  ]
+}

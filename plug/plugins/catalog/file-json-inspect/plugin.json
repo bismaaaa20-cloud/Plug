@@ -1,0 +1,18 @@
+{
+  "id": "file-json-inspect",
+  "name": "JSON File Inspector",
+  "version": "1.0.0",
+  "description": "Parse a JSON file and summarize its top-level shape; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "file",
+    "json",
+    "inspect"
+  ]
+}

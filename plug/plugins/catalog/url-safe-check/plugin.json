@@ -1,0 +1,16 @@
+{
+  "id": "url-safe-check",
+  "name": "HTTP URL Format Checker",
+  "version": "1.0.0",
+  "description": "Check URL structure and reject credentials or unsupported schemes.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "url",
+    "validate",
+    "http"
+  ]
+}

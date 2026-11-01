@@ -1,0 +1,16 @@
+{
+  "id": "text-compare-lines",
+  "name": "Line-by-Line Text Comparator",
+  "version": "1.0.0",
+  "description": "Compare two texts by line position and report differences.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "text",
+    "compare",
+    "lines"
+  ]
+}

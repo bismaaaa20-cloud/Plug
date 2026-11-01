@@ -1,0 +1,16 @@
+{
+  "id": "date-week-number",
+  "name": "ISO Week Calculator",
+  "version": "1.0.0",
+  "description": "Return ISO year, week number, and weekday for a date.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "date",
+    "week",
+    "calendar"
+  ]
+}

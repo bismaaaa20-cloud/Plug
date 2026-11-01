@@ -1,0 +1,16 @@
+{
+  "id": "html-link-domain-count",
+  "name": "HTML Link Domain Counter",
+  "version": "1.0.0",
+  "description": "Count HTML anchor links grouped by destination hostname.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "html",
+    "link",
+    "domain"
+  ]
+}

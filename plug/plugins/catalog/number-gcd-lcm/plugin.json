@@ -1,0 +1,16 @@
+{
+  "id": "number-gcd-lcm",
+  "name": "GCD and LCM Calculator",
+  "version": "1.0.0",
+  "description": "Calculate greatest common divisor and least common multiple.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "number",
+    "gcd",
+    "lcm"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "archive-extract-safe",
+  "name": "Safe ZIP Extractor",
+  "version": "1.0.0",
+  "description": "Extract bounded ZIP contents with path traversal checks; requires filesystem.read and filesystem.write.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read",
+    "filesystem.write"
+  ],
+  "keywords": [
+    "zip",
+    "archive",
+    "extract"
+  ]
+}

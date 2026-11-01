@@ -1,0 +1,18 @@
+{
+  "id": "archive-create",
+  "name": "ZIP Archive Creator",
+  "version": "1.0.0",
+  "description": "Create a ZIP from named text entries; requires filesystem.write.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.write"
+  ],
+  "keywords": [
+    "zip",
+    "archive",
+    "create"
+  ]
+}

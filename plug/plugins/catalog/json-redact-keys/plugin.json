@@ -1,0 +1,16 @@
+{
+  "id": "json-redact-keys",
+  "name": "JSON Secret Redactor",
+  "version": "1.0.0",
+  "description": "Recursively redact selected keys in JSON data.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "redact",
+    "privacy"
+  ]
+}

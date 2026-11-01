@@ -1,0 +1,18 @@
+{
+  "id": "file-head",
+  "name": "File Head",
+  "version": "1.0.0",
+  "description": "Read the first N UTF-8 text lines; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "file",
+    "head",
+    "preview"
+  ]
+}

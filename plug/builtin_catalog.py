@@ -1,4 +1,4 @@
-"""First-party Plug catalog: 175 plugins and 175 task-specific skills.
+"""First-party Plug catalog: 200 plugins and 200 task-specific skills.
 
 Run `python -m plug.builtin_catalog --install` to materialize the catalog under
 `plug/plugins/catalog` and `plug/skills/catalog`.
@@ -1442,6 +1442,231 @@ def _make_data_extension_handler(task):
     return handler
 
 
+def _run_final_extension(task, a, context):
+    if task == "file-line-count":
+        context.require("filesystem.read")
+        path = Path(str(a.get("path", ""))).expanduser().resolve()
+        if path.stat().st_size > 5000000: raise ValueError("file exceeds the 5 MB text limit")
+        text = path.read_text(encoding="utf-8")
+        return {"path": str(path), "lines": len(text.splitlines()), "characters": len(text)}
+    if task in {"file-head", "file-tail"}:
+        context.require("filesystem.read")
+        path = Path(str(a.get("path", ""))).expanduser().resolve()
+        if path.stat().st_size > 5000000: raise ValueError("file exceeds the 5 MB text limit")
+        lines = path.read_text(encoding="utf-8").splitlines()
+        count = max(0, min(int(a.get("lines", 10)), 1000))
+        selected = lines[:count] if task == "file-head" else (lines[-count:] if count else [])
+        return {"path": str(path), "lines": selected, "returned": len(selected), "total_lines": len(lines)}
+    if task == "file-json-inspect":
+        context.require("filesystem.read")
+        path = Path(str(a.get("path", ""))).expanduser().resolve()
+        if path.stat().st_size > 2000000: raise ValueError("JSON file exceeds the 2 MB limit")
+        value = json.loads(path.read_text(encoding="utf-8"))
+        return {"path": str(path), "type": "object" if isinstance(value, dict) else "array" if isinstance(value, list) else type(value).__name__,
+                "keys": list(value) if isinstance(value, dict) else [], "items": len(value) if isinstance(value, (dict, list)) else None}
+    if task == "archive-create":
+        context.require("filesystem.write")
+        destination = Path(str(a.get("path", ""))).expanduser().resolve()
+        files = a.get("files", {})
+        if not destination.name or not isinstance(files, dict): raise ValueError("path and files mapping are required")
+        if destination.exists(): raise FileExistsError(str(destination))
+        from pathlib import PurePosixPath
+        with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            for name, content in files.items():
+                member = PurePosixPath(str(name))
+                if member.is_absolute() or ".." in member.parts or not member.parts:
+                    raise ValueError("unsafe archive entry path")
+                archive.writestr(str(member), str(content))
+        return {"path": str(destination), "entries": len(files), "bytes": destination.stat().st_size}
+    if task == "archive-extract-safe":
+        context.require("filesystem.read")
+        context.require("filesystem.write")
+        source = Path(str(a.get("archive", ""))).expanduser().resolve()
+        destination = Path(str(a.get("destination", ""))).expanduser().resolve()
+        if not source.is_file(): raise ValueError("archive file not found")
+        destination.mkdir(parents=True, exist_ok=True)
+        total = 0
+        extracted = []
+        with zipfile.ZipFile(source) as archive:
+            infos = archive.infolist()
+            if len(infos) > 1000: raise ValueError("archive contains too many entries")
+            for info in infos:
+                member = Path(info.filename)
+                target = (destination / member).resolve()
+                if member.is_absolute() or ".." in member.parts or (target != destination and destination not in target.parents):
+                    raise ValueError("unsafe archive entry path")
+                total += info.file_size
+                if total > 25000000: raise ValueError("archive expands beyond the 25 MB limit")
+                if info.is_dir():
+                    target.mkdir(parents=True, exist_ok=True)
+                else:
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(archive.read(info))
+                    extracted.append(str(target))
+        return {"destination": str(destination), "files": extracted, "count": len(extracted), "bytes": total}
+    if task == "file-copy":
+        context.require("filesystem.read")
+        context.require("filesystem.write")
+        source = Path(str(a.get("source", ""))).expanduser().resolve()
+        destination = Path(str(a.get("destination", ""))).expanduser().resolve()
+        if not source.is_file(): raise ValueError("source file not found")
+        if destination.exists(): raise FileExistsError(str(destination))
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(source.read_bytes())
+        return {"source": str(source), "destination": str(destination), "bytes": destination.stat().st_size}
+    if task == "file-rename":
+        context.require("filesystem.write")
+        source = Path(str(a.get("path", ""))).expanduser().resolve()
+        new_name = str(a.get("new_name", ""))
+        if not source.exists() or not new_name or Path(new_name).name != new_name:
+            raise ValueError("source must exist and new_name must be a filename only")
+        destination = source.with_name(new_name)
+        if destination.exists(): raise FileExistsError(str(destination))
+        source.rename(destination)
+        return {"old_path": str(source), "new_path": str(destination)}
+    if task == "directory-empty-check":
+        context.require("filesystem.read")
+        root = Path(str(a.get("path", ""))).expanduser().resolve()
+        if not root.is_dir(): raise ValueError("path is not a directory")
+        return {"path": str(root), "empty": next(root.iterdir(), None) is None}
+    if task == "json-schema-lite":
+        value, schema = a.get("data"), a.get("schema", {})
+        if isinstance(value, str): value = json.loads(value)
+        if isinstance(schema, str): schema = json.loads(schema)
+        if not isinstance(schema, dict): raise ValueError("schema must be an object")
+        expected = schema.get("type")
+        type_ok = {"object": isinstance(value, dict), "array": isinstance(value, list),
+                   "string": isinstance(value, str), "number": isinstance(value, (int, float)) and not isinstance(value, bool),
+                   "integer": isinstance(value, int) and not isinstance(value, bool),
+                   "boolean": isinstance(value, bool), "null": value is None}
+        errors = []
+        if expected in type_ok and not type_ok[expected]: errors.append("expected type " + expected)
+        if isinstance(value, dict):
+            for key in schema.get("required", []):
+                if key not in value: errors.append("missing required key: " + str(key))
+            for key, rule in schema.get("properties", {}).items():
+                if key in value and isinstance(rule, dict) and rule.get("type") in type_ok:
+                    if not type_ok[rule["type"]]: errors.append("property " + key + " expected " + rule["type"])
+        if isinstance(value, list) and isinstance(schema.get("items"), dict):
+            rule = schema["items"]
+            if rule.get("type") in type_ok:
+                for index, item in enumerate(value):
+                    if not type_ok[rule["type"]]: errors.append("item type mismatch")
+                    break
+        return {"valid": not errors, "errors": errors, "checked_type": expected}
+    if task == "json-redact-keys":
+        value = a.get("json", a.get("data"))
+        if isinstance(value, str): value = json.loads(value)
+        keys = {str(key).casefold() for key in a.get("keys", ["password", "secret", "token", "api_key", "access_token"])}
+        def redact(item):
+            if isinstance(item, dict):
+                return {key: "[REDACTED]" if str(key).casefold() in keys else redact(child) for key, child in item.items()}
+            if isinstance(item, list): return [redact(child) for child in item]
+            return item
+        return {"data": redact(value), "redacted_keys": sorted(keys)}
+    if task == "xml-element-paths":
+        root = ET.fromstring(str(a.get("xml", "")))
+        result = []
+        def visit(node, path):
+            result.append({"path": path, "tag": node.tag, "attributes": dict(node.attrib)})
+            counts = {}
+            for child in list(node):
+                counts[child.tag] = counts.get(child.tag, 0) + 1
+                visit(child, path + "/" + child.tag + "[" + str(counts[child.tag]) + "]")
+        visit(root, "/" + root.tag + "[1]")
+        return {"elements": result, "count": len(result)}
+    if task == "text-compare-lines":
+        from itertools import zip_longest
+        left = str(a.get("left", "")).splitlines()
+        right = str(a.get("right", "")).splitlines()
+        changes = [{"line": index, "before": first, "after": second}
+                   for index, (first, second) in enumerate(zip_longest(left, right), 1) if first != second]
+        return {"changes": changes, "changed_lines": len(changes), "same": not changes}
+    if task == "todo-extract":
+        markers = []
+        pattern = re.compile(r"\b(TODO|FIXME|BUG)\b\s*:?\s*(.*)", re.I)
+        for number, line in enumerate(str(a.get("text", "")).splitlines(), 1):
+            match = pattern.search(line)
+            if match: markers.append({"kind": match.group(1).upper(), "line": number, "text": match.group(2).strip()})
+        return {"markers": markers, "count": len(markers)}
+    if task == "number-gcd-lcm":
+        left, right = int(a.get("left", 0)), int(a.get("right", 0))
+        gcd = math.gcd(left, right)
+        lcm = abs(left * right) // gcd if gcd else 0
+        return {"gcd": gcd, "lcm": lcm}
+    if task == "number-roman":
+        number = int(a.get("value", 0))
+        if not 1 <= number <= 3999: raise ValueError("value must be from 1 to 3999")
+        pairs = [(1000,"M"),(900,"CM"),(500,"D"),(400,"CD"),(100,"C"),(90,"XC"),(50,"L"),(40,"XL"),(10,"X"),(9,"IX"),(5,"V"),(4,"IV"),(1,"I")]
+        result = []
+        for amount, symbol in pairs:
+            count, number = divmod(number, amount)
+            result.append(symbol * count)
+        return {"roman": "".join(result)}
+    if task in {"color-rgb-hsl", "color-hsl-rgb"}:
+        import colorsys
+        if task == "color-rgb-hsl":
+            channels = [float(a.get(key, 0)) / 255 for key in ("r", "g", "b")]
+            if any(value < 0 or value > 1 for value in channels): raise ValueError("RGB channels must be 0 to 255")
+            h, light, sat = colorsys.rgb_to_hls(*channels)
+            return {"h": round(h * 360, 2), "s": round(sat * 100, 2), "l": round(light * 100, 2)}
+        h = float(a.get("h", 0)) % 360 / 360
+        sat, light = float(a.get("s", 0)) / 100, float(a.get("l", 0)) / 100
+        if not 0 <= sat <= 1 or not 0 <= light <= 1: raise ValueError("S and L must be 0 to 100")
+        r, g, b = colorsys.hls_to_rgb(h, light, sat)
+        return {"r": round(r * 255), "g": round(g * 255), "b": round(b * 255)}
+    if task == "date-month-calendar":
+        import calendar
+        year, month = int(a.get("year", 2026)), int(a.get("month", 1))
+        if not 1 <= month <= 12: raise ValueError("month must be 1 to 12")
+        return {"year": year, "month": month, "weeks": calendar.Calendar(firstweekday=0).monthdayscalendar(year, month)}
+    if task == "date-week-number":
+        value = datetime.fromisoformat(str(a.get("date", ""))).date()
+        iso = value.isocalendar()
+        return {"date": value.isoformat(), "iso_year": iso.year, "week": iso.week, "weekday": iso.weekday}
+    if task == "url-safe-check":
+        from urllib.parse import urlsplit
+        value = str(a.get("url", ""))
+        try:
+            parts = urlsplit(value)
+            valid = parts.scheme in {"http", "https"} and bool(parts.hostname) and not parts.username and not parts.password
+            if parts.port is not None and not 1 <= parts.port <= 65535: valid = False
+        except ValueError:
+            valid = False
+        return {"url": value, "valid_http_url": valid}
+    if task == "html-link-domain-count":
+        from urllib.parse import urlparse
+        domains = {}
+        for href in re.findall(r"(?is)<a\b[^>]*href\s*=\s*['\"]([^'\"]+)", str(a.get("html", ""))):
+            host = urlparse(html.unescape(href)).hostname or "[relative]"
+            domains[host.lower()] = domains.get(host.lower(), 0) + 1
+        return {"domains": domains, "links": sum(domains.values())}
+    if task == "css-variable-extract":
+        source = str(a.get("css", ""))
+        variables = dict(re.findall(r"(--[A-Za-z0-9_-]+)\s*:\s*([^;{}]+)", source))
+        return {"variables": {key: value.strip() for key, value in variables.items()}, "count": len(variables)}
+    if task == "jsonl-to-json":
+        rows = []
+        for number, line in enumerate(str(a.get("text", "")).splitlines(), 1):
+            if line.strip():
+                try: rows.append(json.loads(line))
+                except json.JSONDecodeError as exc: raise ValueError("invalid JSON on line " + str(number)) from exc
+        return {"json": json.dumps(rows, ensure_ascii=False, indent=2), "count": len(rows)}
+    if task == "json-to-jsonl":
+        items = a.get("items", a.get("json", []))
+        if isinstance(items, str): items = json.loads(items)
+        if not isinstance(items, list): raise ValueError("input must be a JSON array")
+        return {"text": "\n".join(json.dumps(item, ensure_ascii=False, separators=(",", ":")) for item in items),
+                "count": len(items)}
+    raise KeyError("unknown final extension task: " + task)
+
+
+def _make_final_extension_handler(task):
+    def handler(arguments, context=None):
+        return _run_final_extension(task, arguments, context)
+    return handler
+
+
 PLUGIN_DEFINITIONS = [
     ("text-stats", "Text Statistics", "Count characters, words and lines.", ("text", "count", "words"), _text_stats),
     ("text-clean", "Text Cleaner", "Trim and normalize whitespace.", ("text", "clean", "whitespace"), _text_clean),
@@ -1618,6 +1843,31 @@ PLUGIN_DEFINITIONS = [
     ("css-rule-count", "CSS Rule Counter", "Count CSS selectors and declarations while ignoring block comments.", ["css","rules","count"], _make_data_extension_handler("css-rule-count")),
     ("html-form-inspect", "HTML Form Inspector", "Inspect form actions, methods, and named input fields.", ["html","form","inspect"], _make_data_extension_handler("html-form-inspect")),
     ("html-table-extract", "HTML Table Extractor", "Extract rows and cell text from HTML tables.", ["html","table","extract"], _make_data_extension_handler("html-table-extract")),
+    ("file-line-count", "File Line Counter", "Count UTF-8 text lines and characters; requires filesystem.read.", ["file","line count","text"], _make_final_extension_handler("file-line-count")),
+    ("file-head", "File Head", "Read the first N UTF-8 text lines; requires filesystem.read.", ["file","head","preview"], _make_final_extension_handler("file-head")),
+    ("file-tail", "File Tail", "Read the last N UTF-8 text lines; requires filesystem.read.", ["file","tail","preview"], _make_final_extension_handler("file-tail")),
+    ("file-json-inspect", "JSON File Inspector", "Parse a JSON file and summarize its top-level shape; requires filesystem.read.", ["file","json","inspect"], _make_final_extension_handler("file-json-inspect")),
+    ("archive-create", "ZIP Archive Creator", "Create a ZIP from named text entries; requires filesystem.write.", ["zip","archive","create"], _make_final_extension_handler("archive-create")),
+    ("archive-extract-safe", "Safe ZIP Extractor", "Extract bounded ZIP contents with path traversal checks; requires filesystem.read and filesystem.write.", ["zip","archive","extract"], _make_final_extension_handler("archive-extract-safe")),
+    ("file-copy", "File Copier", "Copy a file without overwriting an existing destination; requires read and write permissions.", ["file","copy"], _make_final_extension_handler("file-copy")),
+    ("file-rename", "File Renamer", "Rename a file within its current directory without overwriting; requires filesystem.write.", ["file","rename"], _make_final_extension_handler("file-rename")),
+    ("directory-empty-check", "Directory Empty Checker", "Check whether a directory contains any entries; requires filesystem.read.", ["directory","empty","folder"], _make_final_extension_handler("directory-empty-check")),
+    ("json-schema-lite", "JSON Schema Lite Validator", "Check basic JSON type, required keys, and property types.", ["json","schema","validate"], _make_final_extension_handler("json-schema-lite")),
+    ("json-redact-keys", "JSON Secret Redactor", "Recursively redact selected keys in JSON data.", ["json","redact","privacy"], _make_final_extension_handler("json-redact-keys")),
+    ("xml-element-paths", "XML Element Path Finder", "List element paths, tags, and attributes in an XML document.", ["xml","paths","structure"], _make_final_extension_handler("xml-element-paths")),
+    ("text-compare-lines", "Line-by-Line Text Comparator", "Compare two texts by line position and report differences.", ["text","compare","lines"], _make_final_extension_handler("text-compare-lines")),
+    ("todo-extract", "TODO Marker Extractor", "Find TODO, FIXME, and BUG markers with line numbers.", ["todo","fixme","code"], _make_final_extension_handler("todo-extract")),
+    ("number-gcd-lcm", "GCD and LCM Calculator", "Calculate greatest common divisor and least common multiple.", ["number","gcd","lcm"], _make_final_extension_handler("number-gcd-lcm")),
+    ("number-roman", "Roman Numeral Converter", "Convert integers from 1 to 3999 into Roman numerals.", ["number","roman","convert"], _make_final_extension_handler("number-roman")),
+    ("color-rgb-hsl", "RGB to HSL Converter", "Convert RGB color channels to HSL values.", ["color","rgb","hsl"], _make_final_extension_handler("color-rgb-hsl")),
+    ("color-hsl-rgb", "HSL to RGB Converter", "Convert HSL color values to RGB channels.", ["color","hsl","rgb"], _make_final_extension_handler("color-hsl-rgb")),
+    ("date-month-calendar", "Month Calendar Generator", "Generate a Monday-first calendar grid for a year and month.", ["date","calendar","month"], _make_final_extension_handler("date-month-calendar")),
+    ("date-week-number", "ISO Week Calculator", "Return ISO year, week number, and weekday for a date.", ["date","week","calendar"], _make_final_extension_handler("date-week-number")),
+    ("url-safe-check", "HTTP URL Format Checker", "Check URL structure and reject credentials or unsupported schemes.", ["url","validate","http"], _make_final_extension_handler("url-safe-check")),
+    ("html-link-domain-count", "HTML Link Domain Counter", "Count HTML anchor links grouped by destination hostname.", ["html","link","domain"], _make_final_extension_handler("html-link-domain-count")),
+    ("css-variable-extract", "CSS Variable Extractor", "Extract CSS custom property declarations.", ["css","variables","theme"], _make_final_extension_handler("css-variable-extract")),
+    ("jsonl-to-json", "JSONL to JSON", "Convert newline-delimited JSON records into a formatted JSON array.", ["jsonl","json","convert"], _make_final_extension_handler("jsonl-to-json")),
+    ("json-to-jsonl", "JSON to JSONL", "Convert a JSON array into newline-delimited JSON records.", ["json","jsonl","convert"], _make_final_extension_handler("json-to-jsonl")),
 ]
 
 SKILL_DEFINITIONS = [
@@ -1796,6 +2046,31 @@ SKILL_DEFINITIONS = [
     ("customer-success-planning", "Create measurable customer success plans and adoption milestones.", "customer success, onboarding plan", "Define customer outcomes, stakeholders, baseline, adoption milestones, risks, and review cadence. Track verified usage and value indicators. Avoid promising outcomes outside the team's control."),
     ("service-level-design", "Define measurable service commitments and escalation rules.", "SLA, service level, uptime target", "Specify availability measurement, time window, exclusions, support response targets, severity definitions, and reporting. Align commitments with actual capacity and monitoring evidence."),
     ("quality-management", "Establish quality plans, corrective actions, and continuous improvement.", "quality management, QA process", "Define quality objectives, acceptance criteria, inspections, issue classification, corrective actions, and audit evidence. Measure recurring defects and verify corrective actions prevent recurrence."),
+    ("api-security-review", "Review API authentication, authorization, input validation, and data exposure.", "API security review, secure API", "Map endpoints, identities, roles, data sensitivity, and trust boundaries. Check authentication, authorization, rate limits, validation, error leakage, and secret handling. Rank concrete findings and include safe reproduction steps."),
+    ("dependency-management", "Maintain healthy dependencies, versions, licenses, and update policy.", "dependency update, package maintenance", "Inventory direct and transitive dependencies. Check support status, vulnerabilities, licensing, and compatibility. Plan controlled upgrades with lockfiles, tests, rollback, and change notes."),
+    ("code-migration", "Plan and execute safe migrations between languages, frameworks, or versions.", "code migration, framework upgrade", "Define source and target versions, compatibility gaps, scope, and behavior contracts. Migrate incrementally, preserve tests, compare outputs, and keep a rollback path. Flag generated or manual work separately."),
+    ("refactoring", "Improve code structure while preserving externally visible behavior.", "refactor code, clean architecture", "Establish behavior with tests first. Identify duplication, coupling, unclear names, and oversized functions. Make small changes, preserve interfaces, and run regression tests after each step."),
+    ("technical-debt-review", "Identify technical debt and prioritize repayment by impact.", "technical debt, code maintainability", "Record debt item, cause, affected areas, delivery or reliability cost, and remediation estimate. Prioritize by risk reduction and repeated friction, not code-style preference alone."),
+    ("performance-budgeting", "Set measurable performance budgets for applications and pages.", "performance budget, page speed target", "Choose user-centered metrics, representative devices, and network conditions. Define budgets for bundle size, latency, memory, rendering, and startup. Add monitoring and regression gates."),
+    ("game-content-planning", "Plan game content updates, events, and progression beats.", "game content plan, live ops", "Define player segments, event purpose, schedule, rewards, dependencies, and moderation needs. Check fairness and economy impact. Prepare fallback content and announce only verified dates."),
+    ("live-ops-planning", "Plan safe recurring operations for a live game or digital service.", "live ops, game event schedule", "Create an event calendar, configuration checklist, monitoring plan, rollback, and player communications. Validate reward and eligibility rules before launch. Avoid unreviewed production changes."),
+    ("game-monetization-review", "Review game monetization for clarity, fairness, and policy risks.", "game monetization, in-game purchases", "Map purchase value, price disclosure, random rewards, refunds, age context, and platform rules. Check whether progression pressures players unfairly. Flag legal/platform issues for specialist review."),
+    ("game-community-strategy", "Build a sustainable strategy for player communities.", "gaming community, game Discord strategy", "Define community purpose, channels, onboarding, events, moderation, creator support, and feedback loop. Set safety boundaries and metrics for helpful participation and retention."),
+    ("social-media-strategy", "Plan platform-specific social content around clear goals.", "social media strategy, social content", "Define audience, platform, objective, voice, content pillars, cadence, and measurement. Adapt format to platform norms and accessibility. Avoid engagement bait and unverified claims."),
+    ("content-calendar", "Create an actionable multi-channel publishing calendar.", "content calendar, posting schedule", "Set goals, audiences, campaigns, channels, owners, deadlines, and asset dependencies. Balance formats and reuse thoughtfully. Include review, localization, and measurement checkpoints."),
+    ("email-campaign-design", "Plan ethical email campaigns with clear segmentation and measurement.", "email campaign, newsletter strategy", "Define audience, consent basis, lifecycle stage, value proposition, subject, content, and CTA. Include unsubscribe and preference handling. Measure deliverability, engagement, and conversion responsibly."),
+    ("lifecycle-marketing", "Design useful communications across the customer lifecycle.", "lifecycle marketing, onboarding emails", "Map signup, activation, adoption, renewal, and win-back moments. Trigger only on relevant user states and consent. Define suppression rules, frequency caps, and measurable outcomes."),
+    ("growth-experiment-design", "Design responsible experiments to improve acquisition or activation.", "growth experiment, conversion experiment", "State the user problem, hypothesis, target metric, guardrails, sample, and duration. Avoid deceptive patterns. Predefine analysis and report uncertainty and segment effects."),
+    ("brand-voice-development", "Define a consistent and recognizable written brand voice.", "brand voice, tone of voice", "Describe voice traits, audience, vocabulary, grammar, inclusivity, and examples across contexts. Distinguish stable voice from situational tone. Provide do/don't examples and a review checklist."),
+    ("visual-content-strategy", "Plan visual content systems for social, web, and product channels.", "visual content, graphic content plan", "Define message, audience, channel dimensions, content formats, reusable templates, and rights. Keep visual hierarchy consistent and create accessibility alternatives such as alt text or captions."),
+    ("localization-quality-review", "Review translated product content for locale correctness and consistency.", "localization QA, translation review", "Check glossary, placeholders, plural rules, date/number formats, tone, truncation, and locale conventions. Compare with source and test in-context layouts. Mark ambiguous source text for clarification."),
+    ("customer-escalation", "Manage complex customer cases that need specialist ownership.", "customer escalation, support escalation", "Summarize verified facts, impact, troubleshooting already tried, urgency, and next owner. Protect personal data and secrets. Set a clear customer update cadence and record the resolution."),
+    ("crisis-communications", "Prepare clear communications for high-impact incidents or reputational events.", "crisis communication, public statement", "Confirm facts, affected groups, authority, and approval path. Lead with impact and actions, avoid speculation, protect private details, and coordinate consistent updates across channels."),
+    ("procurement-planning", "Structure procurement needs, sourcing, and approval workflows.", "procurement, sourcing plan", "Define business need, requirements, budget authority, evaluation criteria, conflict checks, privacy/security needs, and approval gates. Maintain a transparent audit trail and fair vendor process."),
+    ("vendor-due-diligence", "Assess a vendor's operational, security, privacy, and financial fit.", "vendor due diligence, supplier assessment", "Gather verifiable evidence on security controls, data handling, uptime, support, subcontractors, financial stability, and exit. Separate verified documentation from vendor assertions and open gaps."),
+    ("operations-analytics", "Measure operational processes and identify bottlenecks.", "operations analytics, process metrics", "Define throughput, cycle time, backlog, rework, service quality, and capacity. Validate source data and compare segments. Distinguish measured changes from seasonal or mix effects."),
+    ("product-roadmapping", "Create outcome-based roadmaps that reflect evidence and capacity.", "product roadmap, roadmap planning", "Group initiatives by user or business outcome. Show confidence, dependencies, effort bands, and sequencing. Avoid false precision in dates and keep discovery separate from committed delivery."),
+    ("user-feedback-triage", "Classify user feedback into actionable product signals.", "user feedback triage, feature request sorting", "Capture user goal, context, frequency in supplied evidence, severity, and current workaround. Deduplicate requests and link themes to product outcomes. Do not equate volume with importance automatically."),
 ]
 
 def run_builtin(context, arguments):
@@ -1805,13 +2080,13 @@ def run_builtin(context, arguments):
     if plugin_id not in handlers:
         raise KeyError(f"unknown built-in plugin: {plugin_id}")
     args = dict(arguments or {})
-    if plugin_id in {"files-list", "files-read", "files-write", "web-fetch", "image-dimensions", "file-checksum", "directory-size", "file-size-human", "file-find", "file-text-search", "duplicate-files", "directory-tree", "file-extension-count"}:
+    if plugin_id in {"files-list", "files-read", "files-write", "web-fetch", "image-dimensions", "file-checksum", "directory-size", "file-size-human", "file-find", "file-text-search", "duplicate-files", "directory-tree", "file-extension-count", "file-line-count", "file-head", "file-tail", "file-json-inspect", "archive-create", "archive-extract-safe", "file-copy", "file-rename", "directory-empty-check"}:
         return handlers[plugin_id](args, context)
     return handlers[plugin_id](args)
 
 
 def install_builtin_catalog(plugin_root=None, skill_root=None):
-    """Materialize all 175 plugins and 175 skills; never overwrite existing files."""
+    """Materialize all 200 plugins and 200 skills; never overwrite existing files."""
     import json as _json
     from pathlib import Path as _Path
     base = _Path(__file__).resolve().parent
@@ -1829,7 +2104,7 @@ def install_builtin_catalog(plugin_root=None, skill_root=None):
     for plugin_id, name, description, keywords, handler in PLUGIN_DEFINITIONS:
         folder = plugins / plugin_id
         folder.mkdir(exist_ok=False)
-        permissions = ["filesystem.read"] if plugin_id in {"files-list", "files-read", "image-dimensions", "file-checksum", "directory-size", "file-size-human", "file-find", "file-text-search", "duplicate-files", "directory-tree", "file-extension-count"} else (["filesystem.write"] if plugin_id == "files-write" else (["network.read"] if plugin_id == "web-fetch" else []))
+        permissions = ["filesystem.read", "filesystem.write"] if plugin_id in {"archive-extract-safe", "file-copy"} else (["filesystem.read"] if plugin_id in {"files-list", "files-read", "image-dimensions", "file-checksum", "directory-size", "file-size-human", "file-find", "file-text-search", "duplicate-files", "directory-tree", "file-extension-count", "file-line-count", "file-head", "file-tail", "file-json-inspect", "directory-empty-check"} else (["filesystem.write"] if plugin_id in {"files-write", "archive-create", "file-rename"} else (["network.read"] if plugin_id == "web-fetch" else [])))
         manifest = {"id": plugin_id, "name": name, "version": "1.0.0", "description": description,
                     "entrypoint": "plugin.py", "capabilities": ["network-read"] if plugin_id == "web-fetch" else ["local-processing"],
                     "permissions": permissions, "keywords": list(keywords)}
@@ -1860,7 +2135,7 @@ def install_builtin_catalog(plugin_root=None, skill_root=None):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Install Plug's 175 built-in plugins and 175 skills.")
+    parser = argparse.ArgumentParser(description="Install Plug's 200 built-in plugins and 200 skills.")
     parser.add_argument("--install", action="store_true", help="materialize the bundled catalog")
     args = parser.parse_args()
     if args.install:

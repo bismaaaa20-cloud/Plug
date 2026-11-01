@@ -1,0 +1,16 @@
+{
+  "id": "number-roman",
+  "name": "Roman Numeral Converter",
+  "version": "1.0.0",
+  "description": "Convert integers from 1 to 3999 into Roman numerals.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "number",
+    "roman",
+    "convert"
+  ]
+}

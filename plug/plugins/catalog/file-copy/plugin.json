@@ -1,0 +1,18 @@
+{
+  "id": "file-copy",
+  "name": "File Copier",
+  "version": "1.0.0",
+  "description": "Copy a file without overwriting an existing destination; requires read and write permissions.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read",
+    "filesystem.write"
+  ],
+  "keywords": [
+    "file",
+    "copy"
+  ]
+}

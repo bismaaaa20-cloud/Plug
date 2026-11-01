@@ -1,0 +1,17 @@
+{
+  "id": "file-rename",
+  "name": "File Renamer",
+  "version": "1.0.0",
+  "description": "Rename a file within its current directory without overwriting; requires filesystem.write.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.write"
+  ],
+  "keywords": [
+    "file",
+    "rename"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "json-schema-lite",
+  "name": "JSON Schema Lite Validator",
+  "version": "1.0.0",
+  "description": "Check basic JSON type, required keys, and property types.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "json",
+    "schema",
+    "validate"
+  ]
+}

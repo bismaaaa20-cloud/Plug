@@ -19,34 +19,40 @@ from plug.skills.loader import SkillRegistry
 
 
 class BuiltinCatalogTests(unittest.TestCase):
-    def test_catalog_has_exactly_175_plugins_and_175_skills(self):
-        self.assertEqual(len(PLUGIN_DEFINITIONS), 175)
-        self.assertEqual(len(SKILL_DEFINITIONS), 175)
-        self.assertEqual(len({item[0] for item in PLUGIN_DEFINITIONS}), 175)
-        self.assertEqual(len({item[0] for item in SKILL_DEFINITIONS}), 175)
+    def test_catalog_has_exactly_200_plugins_and_200_skills(self):
+        self.assertEqual(len(PLUGIN_DEFINITIONS), 200)
+        self.assertEqual(len(SKILL_DEFINITIONS), 200)
+        self.assertEqual(len({item[0] for item in PLUGIN_DEFINITIONS}), 200)
+        self.assertEqual(len({item[0] for item in SKILL_DEFINITIONS}), 200)
 
     def test_installer_materializes_all_items_and_discovery_finds_them(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             plugin_root, skill_root = root / "plugins", root / "skills"
             result = install_builtin_catalog(plugin_root, skill_root)
-            self.assertEqual(result["plugins"], 175)
-            self.assertEqual(result["skills"], 175)
-            self.assertEqual(len(list(plugin_root.glob("*/plugin.json"))), 175)
-            self.assertEqual(len(list(skill_root.glob("*/SKILL.md"))), 175)
-            self.assertEqual(len(list(skill_root.glob("*/scripts/main.py"))), 175)
+            self.assertEqual(result["plugins"], 200)
+            self.assertEqual(result["skills"], 200)
+            self.assertEqual(len(list(plugin_root.glob("*/plugin.json"))), 200)
+            self.assertEqual(len(list(skill_root.glob("*/SKILL.md"))), 200)
+            self.assertEqual(len(list(skill_root.glob("*/scripts/main.py"))), 200)
             plugins = PluginRegistry()
             plugins.discover(plugin_root)
-            self.assertEqual(len(plugins.names()), 175)
+            self.assertEqual(len(plugins.names()), 200)
             skills = SkillRegistry()
             skills.discover(skill_root)
-            self.assertEqual(len(skills.names()), 175)
+            self.assertEqual(len(skills.names()), 200)
 
     def test_all_plugin_handlers_execute(self):
         with tempfile.TemporaryDirectory() as archive_dir:
             archive_path = Path(archive_dir) / "sample.zip"
             image_path = Path(archive_dir) / "tiny.png"
             image_path.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\x0dIHDR" + (2).to_bytes(4, "big") + (1).to_bytes(4, "big"))
+            sample_text_path = Path(archive_dir) / "sample.txt"
+            sample_text_path.write_text("first line\\nsecond line needle\\n", encoding="utf-8")
+            json_file_path = Path(archive_dir) / "sample.json"
+            json_file_path.write_text('{"name":"Ada","active":true}', encoding="utf-8")
+            rename_path = Path(archive_dir) / "rename-me.txt"
+            rename_path.write_text("rename", encoding="utf-8")
             with zipfile.ZipFile(archive_path, "w") as archive:
                 archive.writestr("sample.txt", "hello needle")
             (Path(archive_dir) / "copy.txt").write_text("same", encoding="utf-8")
@@ -227,6 +233,31 @@ class BuiltinCatalogTests(unittest.TestCase):
                 "css-rule-count": {"css": "h1 { color: red; margin: 0; }"},
                 "html-form-inspect": {"html": "<form action='/go' method='post'><input name='email' type='email'></form>"},
                 "html-table-extract": {"html": "<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>"},
+                "file-line-count": {"path": sample_text_path},
+                "file-head": {"path": sample_text_path, "lines": 1},
+                "file-tail": {"path": sample_text_path, "lines": 1},
+                "file-json-inspect": {"path": json_file_path},
+                "archive-create": {"path": str(Path(archive_dir) / "created.zip"), "files": {"docs/readme.txt": "hello"}},
+                "archive-extract-safe": {"archive": archive_path, "destination": str(Path(archive_dir) / "unpacked")},
+                "file-copy": {"source": sample_text_path, "destination": str(Path(archive_dir) / "copied.txt")},
+                "file-rename": {"path": rename_path, "new_name": "renamed.txt"},
+                "directory-empty-check": {"path": archive_dir},
+                "json-schema-lite": {"data": {"name": "Ada", "age": 36}, "schema": {"type": "object", "required": ["name"], "properties": {"age": {"type": "integer"}}}},
+                "json-redact-keys": {"data": {"user": {"name": "Ada", "password": "secret"}}},
+                "xml-element-paths": {"xml": "<root><item id='1'><name>A</name></item></root>"},
+                "text-compare-lines": {"left": "a\nb", "right": "a\nc"},
+                "todo-extract": {"text": "# TODO: fix\n# FIXME improve"},
+                "number-gcd-lcm": {"left": 12, "right": 18},
+                "number-roman": {"value": 1994},
+                "color-rgb-hsl": {"r": 255, "g": 0, "b": 0},
+                "color-hsl-rgb": {"h": 0, "s": 100, "l": 50},
+                "date-month-calendar": {"year": 2026, "month": 11},
+                "date-week-number": {"date": "2026-11-01"},
+                "url-safe-check": {"url": "https://example.com/path"},
+                "html-link-domain-count": {"html": "<a href='https://example.com'>A</a><a href='/local'>B</a>"},
+                "css-variable-extract": {"css": ":root { --blue: #123456; --gap: 8px; }"},
+                "jsonl-to-json": {"text": "{\"a\":1}\n{\"b\":2}"},
+                "json-to-jsonl": {"items": [{"a": 1}, {"b": 2}]},
             }
 
             class Context:
@@ -290,12 +321,12 @@ class BuiltinCatalogTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         plugins = PluginRegistry()
         skills = SkillRegistry()
-        self.assertEqual(len(plugins.discover(root / "plug" / "plugins" / "catalog")), 175)
-        self.assertEqual(len(skills.discover(root / "plug" / "skills" / "catalog")), 175)
+        self.assertEqual(len(plugins.discover(root / "plug" / "plugins" / "catalog")), 200)
+        self.assertEqual(len(skills.discover(root / "plug" / "skills" / "catalog")), 200)
         result = install_builtin_catalog()
         self.assertTrue(result["already_installed"])
-        self.assertEqual(result["plugins"], 175)
-        self.assertEqual(result["skills"], 175)
+        self.assertEqual(result["plugins"], 200)
+        self.assertEqual(result["skills"], 200)
 
     def test_installer_refuses_to_overwrite_existing_catalog(self):
         with tempfile.TemporaryDirectory() as temp:

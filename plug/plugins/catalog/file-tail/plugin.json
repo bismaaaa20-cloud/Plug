@@ -1,0 +1,18 @@
+{
+  "id": "file-tail",
+  "name": "File Tail",
+  "version": "1.0.0",
+  "description": "Read the last N UTF-8 text lines; requires filesystem.read.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [
+    "filesystem.read"
+  ],
+  "keywords": [
+    "file",
+    "tail",
+    "preview"
+  ]
+}

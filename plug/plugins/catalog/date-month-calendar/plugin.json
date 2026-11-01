@@ -1,0 +1,16 @@
+{
+  "id": "date-month-calendar",
+  "name": "Month Calendar Generator",
+  "version": "1.0.0",
+  "description": "Generate a Monday-first calendar grid for a year and month.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "date",
+    "calendar",
+    "month"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "todo-extract",
+  "name": "TODO Marker Extractor",
+  "version": "1.0.0",
+  "description": "Find TODO, FIXME, and BUG markers with line numbers.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "todo",
+    "fixme",
+    "code"
+  ]
+}

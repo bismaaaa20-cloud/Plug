@@ -1,0 +1,16 @@
+{
+  "id": "jsonl-to-json",
+  "name": "JSONL to JSON",
+  "version": "1.0.0",
+  "description": "Convert newline-delimited JSON records into a formatted JSON array.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "jsonl",
+    "json",
+    "convert"
+  ]
+}

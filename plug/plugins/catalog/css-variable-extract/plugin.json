@@ -1,0 +1,16 @@
+{
+  "id": "css-variable-extract",
+  "name": "CSS Variable Extractor",
+  "version": "1.0.0",
+  "description": "Extract CSS custom property declarations.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "css",
+    "variables",
+    "theme"
+  ]
+}

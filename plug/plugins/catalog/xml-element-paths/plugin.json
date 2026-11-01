@@ -1,0 +1,16 @@
+{
+  "id": "xml-element-paths",
+  "name": "XML Element Path Finder",
+  "version": "1.0.0",
+  "description": "List element paths, tags, and attributes in an XML document.",
+  "entrypoint": "plugin.py",
+  "capabilities": [
+    "local-processing"
+  ],
+  "permissions": [],
+  "keywords": [
+    "xml",
+    "paths",
+    "structure"
+  ]
+}
