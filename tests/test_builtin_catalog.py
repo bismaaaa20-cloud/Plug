@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import zipfile
+import asyncio
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -40,7 +42,11 @@ class BuiltinCatalogTests(unittest.TestCase):
             self.assertEqual(len(skills.names()), 25)
 
     def test_all_plugin_handlers_execute(self):
-        samples = {
+        with tempfile.TemporaryDirectory() as archive_dir:
+            archive_path = Path(archive_dir) / "sample.zip"
+            with zipfile.ZipFile(archive_path, "w") as archive:
+                archive.writestr("sample.txt", "hello")
+            samples = {
             "text-stats": {"text": "one two\nthree"},
             "text-clean": {"text": "  hello  "},
             "text-slug": {"text": "Hello Plug!"},
@@ -61,7 +67,7 @@ class BuiltinCatalogTests(unittest.TestCase):
             "files-list": {"path": "."},
             "files-read": {"path": __file__},
             "files-write": {"path": str(Path(tempfile.gettempdir()) / "plug-catalog-test.txt"), "text": "ok"},
-            "archive-inspect": {"path": __file__},
+            "archive-inspect": {"path": str(archive_path)},
             "python-check": {"source": "x = 1"},
             "xml-parse": {"xml": "<root><child /></root>"},
             "html-extract": {"html": "<title>Test</title><p>Hello</p>"},
@@ -72,10 +78,29 @@ class BuiltinCatalogTests(unittest.TestCase):
                 self.plugin_id = plugin_id
             def require(self, permission):
                 return None
-        for plugin_id, *_ in PLUGIN_DEFINITIONS:
-            with self.subTest(plugin=plugin_id):
-                result = run_builtin(Context(plugin_id), samples[plugin_id])
-                self.assertIsNotNone(result)
+            for plugin_id, *_ in PLUGIN_DEFINITIONS:
+                with self.subTest(plugin=plugin_id):
+                    result = run_builtin(Context(plugin_id), samples[plugin_id])
+                    self.assertIsNotNone(result)
+
+    def test_registry_executes_catalog_plugin_with_permission_gate(self):
+        with tempfile.TemporaryDirectory() as temp:
+            plugin_root = Path(temp) / "plugins"
+            skill_root = Path(temp) / "skills"
+            install_builtin_catalog(plugin_root, skill_root)
+            registry = PluginRegistry()
+            registry.discover(plugin_root)
+            registry.enable("math-calc")
+            result = asyncio.run(registry.execute("math-calc", arguments={"expression": "6 * 7"}))
+            self.assertTrue(result.ok)
+            self.assertEqual(result.data["result"], 42)
+            registry.enable("files-read")
+            with self.assertRaises(PermissionError):
+                asyncio.run(registry.execute("files-read", arguments={"path": __file__}))
+            result = asyncio.run(registry.execute(
+                "files-read", granted_permissions={"filesystem.read"},
+                arguments={"path": __file__}))
+            self.assertTrue(result.ok)
 
     def test_safe_calculator_rejects_code_execution(self):
         with self.assertRaises((ValueError, SyntaxError)):
