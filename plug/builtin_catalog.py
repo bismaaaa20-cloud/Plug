@@ -244,18 +244,20 @@ def _runtime_info(a):
 def _markdown_toc(a):
     lines = []
     for line in str(a.get("markdown", a.get("text", ""))).splitlines():
-        match = re.match(r"^(#{1,6})\\s+(.+?)\\s*#*\\s*$", line)
+        match = re.match(r"^(#{1,6})\s+(.+?)\s*#*\s*$", line)
         if match:
             title = match.group(2).strip()
             slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
             lines.append("  " * (len(match.group(1)) - 1) + f"- [{title}](#{slug})")
-    return {"toc": "\\n".join(lines), "count": len(lines)}
+    return {"toc": "\n".join(lines), "count": len(lines)}
+
 
 def _markdown_links(a):
     source = str(a.get("markdown", a.get("text", "")))
-    pattern = r"(?<!!)\\[([^\\]]+)\\]\\(([^)]+)\\)"
-    links = [{"label": m.group(1), "url": m.group(2)} for m in re.finditer(pattern, source)]
+    pattern = r"(?<!!)\[([^\]]+)\]\(([^)]+)\)"
+    links = [{"label": match.group(1), "url": match.group(2)} for match in re.finditer(pattern, source)]
     return {"links": links, "count": len(links)}
+
 
 def _text_dedupe_lines(a):
     lines = str(a.get("text", "")).splitlines()
@@ -265,12 +267,14 @@ def _text_dedupe_lines(a):
         if key not in seen:
             seen.add(key)
             result.append(line)
-    return {"text": "\\n".join(result), "removed": len(lines) - len(result)}
+    return {"text": "\n".join(result), "removed": len(lines) - len(result)}
+
 
 def _text_sort_lines(a):
     lines = str(a.get("text", "")).splitlines()
     result = sorted(lines, key=str.casefold, reverse=bool(a.get("reverse", False)))
-    return {"text": "\\n".join(result)}
+    return {"text": "\n".join(result)}
+
 
 def _text_case(a):
     value, mode = str(a.get("text", "")), str(a.get("mode", "lower"))
@@ -280,22 +284,25 @@ def _text_case(a):
         raise ValueError("mode must be upper, lower, title, or sentence")
     return {"text": choices[mode]}
 
+
 def _word_frequency(a):
     from collections import Counter
-    words = re.findall(r"\\b[\\w']+\\b", str(a.get("text", "")).casefold())
+    words = re.findall(r"\b[\w']+\b", str(a.get("text", "")).casefold())
     limit = max(1, min(int(a.get("limit", 20)), 200))
     return {"words": [{"word": word, "count": count} for word, count in Counter(words).most_common(limit)],
             "total": len(words)}
 
+
 def _html_links(a):
     source = str(a.get("html", ""))
-    pattern = r"""(?is)<a\\b[^>]*href\\s*=\\s*(['"])(.*?)\\1[^>]*>(.*?)</a>"""
+    pattern = r'''(?is)<a\b[^>]*href\s*=\s*(['"])(.*?)\1[^>]*>(.*?)</a>'''
     links = []
     for match in re.finditer(pattern, source):
         label = re.sub(r"(?s)<[^>]+>", " ", match.group(3))
         links.append({"url": html.unescape(match.group(2)),
-                      "label": re.sub(r"\\s+", " ", html.unescape(label)).strip()})
+                      "label": re.sub(r"\s+", " ", html.unescape(label)).strip()})
     return {"links": links, "count": len(links)}
+
 
 def _json_flatten(a):
     obj = a.get("json", a.get("data", {}))
@@ -314,14 +321,17 @@ def _json_flatten(a):
     walk(obj, "")
     return {"flat": output}
 
+
 def _csv_to_json(a):
     rows = list(csv.DictReader(io.StringIO(str(a.get("csv", "")))))
     return {"rows": rows, "count": len(rows), "json": json.dumps(rows, ensure_ascii=False)}
+
 
 def _toml_parse(a):
     import tomllib
     data = tomllib.loads(str(a.get("toml", a.get("text", ""))))
     return {"data": data, "keys": list(data)}
+
 
 PLUGIN_DEFINITIONS = [
     ("text-stats", "Text Statistics", "Count characters, words and lines.", ("text", "count", "words"), _text_stats),

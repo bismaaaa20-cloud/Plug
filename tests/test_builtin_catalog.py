@@ -21,8 +21,8 @@ class BuiltinCatalogTests(unittest.TestCase):
     def test_catalog_has_exactly_35_plugins_and_35_skills(self):
         self.assertEqual(len(PLUGIN_DEFINITIONS), 35)
         self.assertEqual(len(SKILL_DEFINITIONS), 35)
-        self.assertEqual(len({item[0] for item in PLUGIN_DEFINITIONS}), 25)
-        self.assertEqual(len({item[0] for item in SKILL_DEFINITIONS}), 25)
+        self.assertEqual(len({item[0] for item in PLUGIN_DEFINITIONS}), 35)
+        self.assertEqual(len({item[0] for item in SKILL_DEFINITIONS}), 35)
 
     def test_installer_materializes_all_items_and_discovery_finds_them(self):
         with tempfile.TemporaryDirectory() as temp:
