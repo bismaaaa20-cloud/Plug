@@ -316,8 +316,15 @@ def install_builtin_catalog(plugin_root=None, skill_root=None):
     import json as _json
     from pathlib import Path as _Path
     base = _Path(__file__).resolve().parent
-    plugins = _Path(plugin_root) if plugin_root else base / "plugins" / "catalog"
-    skills = _Path(skill_root) if skill_root else base / "skills" / "catalog"
+    use_default_roots = plugin_root is None and skill_root is None
+    plugins = _Path(plugin_root) if plugin_root is not None else base / "plugins" / "catalog"
+    skills = _Path(skill_root) if skill_root is not None else base / "skills" / "catalog"
+    if use_default_roots:
+        plugins_ready = all((plugins / item[0] / "plugin.json").is_file() and (plugins / item[0] / "plugin.py").is_file() for item in PLUGIN_DEFINITIONS)
+        skills_ready = all((skills / item[0] / "SKILL.md").is_file() and (skills / item[0] / "scripts" / "main.py").is_file() for item in SKILL_DEFINITIONS)
+        if plugins_ready and skills_ready:
+            return {"plugins": len(PLUGIN_DEFINITIONS), "skills": len(SKILL_DEFINITIONS),
+                    "plugin_root": str(plugins), "skill_root": str(skills), "already_installed": True}
     plugins.mkdir(parents=True, exist_ok=True)
     skills.mkdir(parents=True, exist_ok=True)
     for plugin_id, name, description, keywords, handler in PLUGIN_DEFINITIONS:
