@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import tempfile
 import unittest
 import zipfile
-import asyncio
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -47,43 +47,46 @@ class BuiltinCatalogTests(unittest.TestCase):
             with zipfile.ZipFile(archive_path, "w") as archive:
                 archive.writestr("sample.txt", "hello")
             samples = {
-            "text-stats": {"text": "one two\nthree"},
-            "text-clean": {"text": "  hello  "},
-            "text-slug": {"text": "Hello Plug!"},
-            "text-extract": {"text": "visit https://example.com"},
-            "json-format": {"json": {"ok": True}},
-            "json-query": {"data": {"a": {"b": 3}}, "path": "a.b"},
-            "csv-stats": {"csv": "name,age\nAda,36\n"},
-            "csv-filter": {"csv": "name,age\nAda,36\n", "column": "name", "equals": "Ada"},
-            "math-calc": {"expression": "2 + 3 * 4"},
-            "datetime-convert": {"value": "2026-01-01T12:00:00+00:00"},
-            "uuid-generate": {"count": 2},
-            "text-hash": {"text": "hello"},
-            "base64-encode": {"text": "hello"},
-            "base64-decode": {"base64": "aGVsbG8="},
-            "url-encode": {"text": "hello world"},
-            "regex-match": {"pattern": r"\\d+", "text": "a12b"},
-            "text-diff": {"before": "old\n", "after": "new\n"},
-            "files-list": {"path": "."},
-            "files-read": {"path": __file__},
-            "files-write": {"path": str(Path(tempfile.gettempdir()) / "plug-catalog-test.txt"), "text": "ok"},
-            "archive-inspect": {"path": str(archive_path)},
-            "python-check": {"source": "x = 1"},
-            "xml-parse": {"xml": "<root><child /></root>"},
-            "html-extract": {"html": "<title>Test</title><p>Hello</p>"},
-            "url-parse": {"url": "https://example.com/path"},
-        }
-        class Context:
-            def __init__(self, plugin_id):
-                self.plugin_id = plugin_id
-            def require(self, permission):
-                return None
+                "text-stats": {"text": "one two\nthree"},
+                "text-clean": {"text": "  hello  "},
+                "text-slug": {"text": "Hello Plug!"},
+                "text-extract": {"text": "visit https://example.com"},
+                "json-format": {"json": {"ok": True}},
+                "json-query": {"data": {"a": {"b": 3}}, "path": "a.b"},
+                "csv-stats": {"csv": "name,age\nAda,36\n"},
+                "csv-filter": {"csv": "name,age\nAda,36\n", "column": "name", "equals": "Ada"},
+                "math-calc": {"expression": "2 + 3 * 4"},
+                "datetime-convert": {"value": "2026-01-01T12:00:00+00:00"},
+                "uuid-generate": {"count": 2},
+                "text-hash": {"text": "hello"},
+                "base64-encode": {"text": "hello"},
+                "base64-decode": {"base64": "aGVsbG8="},
+                "url-encode": {"text": "hello world"},
+                "regex-match": {"pattern": r"\\d+", "text": "a12b"},
+                "text-diff": {"before": "old\n", "after": "new\n"},
+                "files-list": {"path": "."},
+                "files-read": {"path": __file__},
+                "files-write": {"path": str(Path(archive_dir) / "written.txt"), "text": "ok"},
+                "archive-inspect": {"path": str(archive_path)},
+                "python-check": {"source": "x = 1"},
+                "xml-parse": {"xml": "<root><child /></root>"},
+                "html-extract": {"html": "<title>Test</title><p>Hello</p>"},
+                "url-parse": {"url": "https://example.com/path"},
+            }
+
+            class Context:
+                def __init__(self, plugin_id):
+                    self.plugin_id = plugin_id
+
+                def require(self, permission):
+                    return None
+
             for plugin_id, *_ in PLUGIN_DEFINITIONS:
                 with self.subTest(plugin=plugin_id):
                     result = run_builtin(Context(plugin_id), samples[plugin_id])
                     self.assertIsNotNone(result)
 
-    def test_registry_executes_catalog_plugin_with_permission_gate(self):
+    def test_registry_executes_plugins_and_enforces_permissions(self):
         with tempfile.TemporaryDirectory() as temp:
             plugin_root = Path(temp) / "plugins"
             skill_root = Path(temp) / "skills"
@@ -104,7 +107,10 @@ class BuiltinCatalogTests(unittest.TestCase):
 
     def test_safe_calculator_rejects_code_execution(self):
         with self.assertRaises((ValueError, SyntaxError)):
-            run_builtin(SimpleNamespace(plugin_id="math-calc"), {"expression": "__import__('os').system('echo unsafe')"})
+            run_builtin(
+                SimpleNamespace(plugin_id="math-calc"),
+                {"expression": "__import__('os').system('echo unsafe')"},
+            )
 
     def test_installer_refuses_to_overwrite_existing_catalog(self):
         with tempfile.TemporaryDirectory() as temp:
