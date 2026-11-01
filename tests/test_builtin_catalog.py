@@ -46,7 +46,7 @@ class BuiltinCatalogTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as archive_dir:
             archive_path = Path(archive_dir) / "sample.zip"
             image_path = Path(archive_dir) / "tiny.png"
-            image_path.write_bytes(b"\\x89PNG\\r\\n\\x1a\\n" + b"\\x00\\x00\\x00\\x0dIHDR" + (2).to_bytes(4, "big") + (1).to_bytes(4, "big"))
+            image_path.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\x0dIHDR" + (2).to_bytes(4, "big") + (1).to_bytes(4, "big"))
             with zipfile.ZipFile(archive_path, "w") as archive:
                 archive.writestr("sample.txt", "hello")
             samples = {
