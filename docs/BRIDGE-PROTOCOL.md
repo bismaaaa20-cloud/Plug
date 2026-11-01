@@ -123,7 +123,7 @@ Implemented HTTP errors use a JSON object:
 }
 ```
 
-Current error codes include `unauthorized` and `not_found`.
+Current error codes include `unauthorized`, `not_found`, and `busy` (HTTP 503 when the configured request concurrency limit is reached).
 
 ## 5. Running the discovery bridge
 
