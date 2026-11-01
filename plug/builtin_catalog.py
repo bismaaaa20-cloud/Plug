@@ -1534,25 +1534,51 @@ def _run_final_extension(task, a, context):
         if isinstance(value, str): value = json.loads(value)
         if isinstance(schema, str): schema = json.loads(schema)
         if not isinstance(schema, dict): raise ValueError("schema must be an object")
-        expected = schema.get("type")
-        type_ok = {"object": isinstance(value, dict), "array": isinstance(value, list),
-                   "string": isinstance(value, str), "number": isinstance(value, (int, float)) and not isinstance(value, bool),
-                   "integer": isinstance(value, int) and not isinstance(value, bool),
-                   "boolean": isinstance(value, bool), "null": value is None}
+        def matches_type(item, kind):
+            checks = {
+                "object": lambda v: isinstance(v, dict),
+                "array": lambda v: isinstance(v, list),
+                "string": lambda v: isinstance(v, str),
+                "number": lambda v: isinstance(v, (int, float)) and not isinstance(v, bool),
+                "integer": lambda v: isinstance(v, int) and not isinstance(v, bool),
+                "boolean": lambda v: isinstance(v, bool),
+                "null": lambda v: v is None,
+            }
+            if kind not in checks: return None
+            return checks[kind](item)
         errors = []
-        if expected in type_ok and not type_ok[expected]: errors.append("expected type " + expected)
+        expected = schema.get("type")
+        if expected:
+            match = matches_type(value, expected)
+            if match is None: errors.append("unsupported schema type: " + str(expected))
+            elif not match: errors.append("expected type " + str(expected))
         if isinstance(value, dict):
-            for key in schema.get("required", []):
+            required = schema.get("required", [])
+            if not isinstance(required, list): raise ValueError("required must be an array")
+            for key in required:
                 if key not in value: errors.append("missing required key: " + str(key))
-            for key, rule in schema.get("properties", {}).items():
-                if key in value and isinstance(rule, dict) and rule.get("type") in type_ok:
-                    if not type_ok[rule["type"]]: errors.append("property " + key + " expected " + rule["type"])
+            properties = schema.get("properties", {})
+            if not isinstance(properties, dict): raise ValueError("properties must be an object")
+            for key, rule in properties.items():
+                if key not in value or not isinstance(rule, dict): continue
+                kind = rule.get("type")
+                if kind:
+                    match = matches_type(value[key], kind)
+                    if match is None: errors.append("unsupported type for property " + str(key))
+                    elif not match: errors.append("property " + str(key) + " expected " + str(kind))
+                if "enum" in rule and value[key] not in rule["enum"]:
+                    errors.append("property " + str(key) + " is not an allowed value")
+            if schema.get("additionalProperties") is False:
+                extra = set(value) - set(properties)
+                if extra: errors.append("unexpected keys: " + ", ".join(sorted(map(str, extra))))
         if isinstance(value, list) and isinstance(schema.get("items"), dict):
             rule = schema["items"]
-            if rule.get("type") in type_ok:
+            kind = rule.get("type")
+            if kind:
                 for index, item in enumerate(value):
-                    if not type_ok[rule["type"]]: errors.append("item type mismatch")
-                    break
+                    match = matches_type(item, kind)
+                    if match is None: errors.append("unsupported item type: " + str(kind)); break
+                    if not match: errors.append("item " + str(index) + " expected " + str(kind))
         return {"valid": not errors, "errors": errors, "checked_type": expected}
     if task == "json-redact-keys":
         value = a.get("json", a.get("data"))

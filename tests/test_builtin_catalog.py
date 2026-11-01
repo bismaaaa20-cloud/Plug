@@ -310,6 +310,23 @@ class BuiltinCatalogTests(unittest.TestCase):
             _web_fetch({"url": "http://127.0.0.1/"}, context)
         self.assertEqual(context.permission, "network.read")
 
+    def test_json_schema_lite_validates_nested_property_and_array_types(self):
+        valid = run_builtin(
+            SimpleNamespace(plugin_id="json-schema-lite"),
+            {"data": {"name": "Ada", "age": 36},
+             "schema": {"type": "object", "required": ["name"],
+                        "properties": {"age": {"type": "integer"}}}},
+        )
+        self.assertTrue(valid["valid"])
+        invalid = run_builtin(
+            SimpleNamespace(plugin_id="json-schema-lite"),
+            {"data": {"name": "Ada", "age": "36"},
+             "schema": {"type": "object", "required": ["name"],
+                        "properties": {"age": {"type": "integer"}}}},
+        )
+        self.assertFalse(invalid["valid"])
+        self.assertIn("property age expected integer", invalid["errors"])
+
     def test_safe_calculator_rejects_code_execution(self):
         with self.assertRaises((ValueError, SyntaxError)):
             run_builtin(

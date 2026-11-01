@@ -136,7 +136,7 @@ plugin handler, safe calculator behavior, and overwrite protection.
 
 ## Security and connection status
 
-Filesystem inspection plugins require `filesystem.read`; archive creation and rename operations require `filesystem.write`; copy and extraction require both. `web-fetch` requires the explicit `network.read` permission. It accepts public HTTP(S) URLs on standard ports, blocks non-public resolved addresses and validates redirect destinations, supports text responses only, and caps the response body at 1 MB. It does not run JavaScript or automate authenticated browser sessions.
+Filesystem inspection plugins require `filesystem.read`; archive creation and rename operations require `filesystem.write`; copy and extraction require both. `json-schema-lite` checks a deliberately small subset: basic JSON types, required object keys, property types/enums, additional-properties policy, and array item types; it is not a full JSON Schema implementation. `web-fetch` requires the explicit `network.read` permission. It accepts public HTTP(S) URLs on standard ports, blocks non-public resolved addresses and validates redirect destinations, supports text responses only, and caps the response body at 1 MB. It does not run JavaScript or automate authenticated browser sessions.
 
 All 200 plugins are local standard-library operations. No cloud account, API
 key, network access, or MCP server is required. The ZIP inspector lists entries
