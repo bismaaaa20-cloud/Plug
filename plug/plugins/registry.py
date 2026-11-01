@@ -13,6 +13,12 @@ from plug.plugins.sdk import PluginContext, PluginResult
 
 
 class PluginRegistry:
+    """Registry for reviewed, trusted Python plugins.
+
+    Discovery is transactional: a malformed package never leaves a partially
+    populated registry. This loader is not a sandbox; plugins execute in-process.
+    """
+
     def __init__(self) -> None:
         self._plugins: dict[str, tuple[PluginManifest, Path]] = {}
         self._enabled: set[str] = set()
@@ -21,17 +27,31 @@ class PluginRegistry:
         base = Path(root).resolve()
         if not base.exists():
             return ()
+        if not base.is_dir():
+            raise NotADirectoryError(base)
+
+        pending: dict[str, tuple[PluginManifest, Path]] = {}
         found: list[str] = []
         for manifest_path in sorted(base.glob("*/plugin.json")):
-            plugin_dir = manifest_path.parent.resolve()
-            if plugin_dir.parent != base:
-                continue
+            package_path = manifest_path.parent
+            plugin_dir = package_path.resolve()
+            if package_path.is_symlink() or plugin_dir.parent != base:
+                raise ValueError(f"plugin directory escapes catalog root: {package_path}")
+            if manifest_path.is_symlink() or not manifest_path.is_file():
+                raise ValueError(f"invalid plugin manifest path: {manifest_path}")
+
             data = json.loads(manifest_path.read_text(encoding="utf-8"))
             manifest = PluginManifest.from_dict(data)
-            if manifest.id in self._plugins:
+            if manifest.id != package_path.name:
+                raise ValueError(
+                    f"plugin id {manifest.id!r} does not match directory {package_path.name!r}"
+                )
+            if manifest.id in self._plugins or manifest.id in pending:
                 raise ValueError(f"duplicate plugin id: {manifest.id}")
-            self._plugins[manifest.id] = (manifest, plugin_dir)
+            pending[manifest.id] = (manifest, plugin_dir)
             found.append(manifest.id)
+
+        self._plugins.update(pending)
         return tuple(found)
 
     def get(self, plugin_id: str) -> PluginManifest:
@@ -64,6 +84,7 @@ class PluginRegistry:
         missing = set(manifest.permissions) - granted
         if missing:
             raise PermissionError(f"plugin requires ungranted permissions: {sorted(missing)}")
+
         entrypoint = (plugin_dir / manifest.entrypoint).resolve()
         if plugin_dir not in entrypoint.parents or not entrypoint.is_file():
             raise ValueError("plugin entrypoint is missing or escapes its directory")
