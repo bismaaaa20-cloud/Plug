@@ -53,7 +53,17 @@ python -m plug.builtin_catalog --install
 python -m unittest tests.test_builtin_catalog -v
 ```
 
-## Local extensions (initial foundation)
+## Local extensions and token efficiency
+
+Plug includes a local SQLite memory store. Use `MemoryStore.recall_context()` to inject
+only a few relevant memories under a small prompt budget; exact duplicate notes are
+not stored twice. Root `AGENTS.md` provides a compact always-on working policy for
+coding agents that support repository instruction files. The longer guide is
+[docs/LEAN-MODE.md](docs/LEAN-MODE.md). Memory capture and prompt injection must be
+connected by the host application; this repository does not claim automatic capture
+from every external AI chat or tool event.
+
+Local extensions (initial foundation)
 
 Plug now includes a local plugin SDK and registry, a portable `SKILL.md` loader,
 scaffold builders for both extensions, deterministic context-based selection,
