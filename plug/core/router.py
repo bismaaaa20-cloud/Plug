@@ -96,21 +96,19 @@ class RouteDecision:
         if isinstance(max_items, bool) or not isinstance(max_items, int) or max_items < 1:
             raise ValueError("max_items must be a positive integer")
 
-        budget = max_tokens * 3
+        prefix = "Plug workflow: "
         lines: list[str] = []
-        used = 0
         for step in self.workflow[:max_items]:
             line = f"{step.phase}:{step.kind}:{step.item_id}"
-            cost = max(1, (len(line.encode("utf-8")) + 2) // 3)
-            if used + cost > max_tokens:
+            candidate = prefix + "; ".join((*lines, line))
+            estimated_tokens = max(1, (len(candidate.encode("utf-8")) + 2) // 3)
+            if estimated_tokens > max_tokens:
                 break
             lines.append(line)
-            used += cost
         if not lines:
             return ""
         # Deliberately omit descriptions, permissions, scores, and skill bodies.
-        result = "Plug workflow: " + "; ".join(lines)
-        return result[:budget]
+        return prefix + "; ".join(lines)
 
 
 class ContextRouter:
