@@ -79,7 +79,7 @@ class FastMultiRouterTests(unittest.TestCase):
             "research web, create video, and publish video", plugins, limit=10
         )
         phases = [step.phase for step in decision.workflow]
-        self.assertEqual(phases, ["research", "create", "transform", "deliver"][:len(phases)])
+        self.assertEqual(phases, ["research", "create", "deliver"])
         self.assertEqual(decision.workflow[0].item_id, "research-web")
 
 
