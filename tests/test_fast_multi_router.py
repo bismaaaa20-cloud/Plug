@@ -57,6 +57,40 @@ class FastMultiRouterTests(unittest.TestCase):
             self.assertEqual(len(decision.skills), 35)
             self.assertEqual(len(decision.plugins), 40)
 
+    def test_prompt_context_is_compact_and_never_includes_skill_instructions(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            create_skill(
+                directory, "deep-research",
+                description="Research and summarize sources",
+                triggers=("web research",),
+            )
+            skills = SkillRegistry()
+            skills.discover(directory)
+            decision = ContextRouter(skills).route("web research sources", (), limit=10)
+            compact = decision.to_prompt_context(max_tokens=40)
+            self.assertIn("skill:deep-research", compact)
+            self.assertNotIn("Research and summarize sources", compact)
+            self.assertNotIn("instructions", compact.lower())
+            self.assertLessEqual((len(compact.encode("utf-8")) + 2) // 3, 40)
+
+    def test_prompt_context_respects_item_cap_and_validates_budget(self) -> None:
+        plugins = tuple(
+            PluginManifest(
+                id=f"web-search-{index:02d}", name=f"Web Search {index}",
+                version="1.0.0", description="Search web sources and research",
+                entrypoint="plugin.py", capabilities=("web-search",),
+                keywords=("web research",),
+            )
+            for index in range(8)
+        )
+        decision = ContextRouter(SkillRegistry()).route(
+            "web research search sources", plugins, limit=8
+        )
+        compact = decision.to_prompt_context(max_tokens=200, max_items=3)
+        self.assertLessEqual(compact.count("plugin:"), 3)
+        with self.assertRaises(ValueError):
+            decision.to_prompt_context(max_tokens=0)
+
     def test_workflow_orders_research_before_creation_and_delivery(self) -> None:
         plugins = (
             PluginManifest(
