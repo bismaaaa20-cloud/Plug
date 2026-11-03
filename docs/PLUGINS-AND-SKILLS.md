@@ -44,6 +44,12 @@ The fast selector uses a cached inverted token index:
 
 The decision exposes `selected_skills`, `selected_plugins`, and `workflow` in addition to the ranked score tuples. The old singular `selected_skill` and `selected_plugin` convenience properties remain for compatibility.
 
+### Token-efficient prompt handoff
+
+Use `RouteDecision.to_prompt_context()` when passing the selection to an AI model. It emits only compact phase/type/ID entries (for example, `research:plugin:web-search`), defaults to a conservative 512-token estimate and 12 workflow items, and never includes full skill instructions, long descriptions, scores, or permission lists. Callers can lower `max_tokens` and `max_items` for tighter budgets. The estimate uses UTF-8 bytes divided by three rather than a provider-specific tokenizer, so it is a guardrail—not an exact token count.
+
+Keep skill bodies and detailed plugin documentation out of the system prompt. Load only the selected skill's instructions or plugin-specific details when needed for the current task. If no workflow item matches, the method returns an empty string.
+
 Example:
 
 ```python
