@@ -44,17 +44,29 @@ class MemoryStore:
             raise ValueError("memory content must not be empty")
         if not isinstance(category, str) or not category.strip():
             raise ValueError("memory category must not be empty")
-        record = MemoryRecord(uuid.uuid4().hex, content.strip(), category.strip(), time.time())
+        clean_content, clean_category = content.strip(), category.strip()
         with self._connect() as connection:
-            connection.execute("INSERT INTO memories VALUES (?, ?, ?, ?)",
-                               (record.id, record.content, record.category, record.created_at))
+            existing = connection.execute(
+                "SELECT id, content, category, created_at FROM memories "
+                "WHERE content = ? AND category = ? ORDER BY created_at DESC LIMIT 1",
+                (clean_content, clean_category),
+            ).fetchone()
+            if existing:
+                return MemoryRecord(
+                    existing["id"], existing["content"], existing["category"], existing["created_at"]
+                )
+            record = MemoryRecord(uuid.uuid4().hex, clean_content, clean_category, time.time())
+            connection.execute(
+                "INSERT INTO memories VALUES (?, ?, ?, ?)",
+                (record.id, record.content, record.category, record.created_at),
+            )
         return record
 
     def search(self, query: str, *, limit: int = 5) -> tuple[MemoryRecord, ...]:
         if not isinstance(query, str) or not query.strip():
             raise ValueError("query must not be empty")
-        if limit < 1:
-            raise ValueError("limit must be positive")
+        if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1:
+            raise ValueError("limit must be a positive integer")
         terms = _tokens(query)
         if not terms:
             return ()
@@ -68,6 +80,30 @@ class MemoryStore:
                 ranked.append((score, row["created_at"], MemoryRecord(row["id"], row["content"], row["category"], row["created_at"])))
         ranked.sort(key=lambda item: (-item[0], -item[1]))
         return tuple(item[2] for item in ranked[:limit])
+
+    def recall_context(
+        self, query: str, *, max_tokens: int = 256, limit: int = 5
+    ) -> str:
+        """Build a small prompt-ready memory block without loading full history.
+
+        Uses a conservative UTF-8-bytes/3 estimate and includes complete records
+        only, so the budget is never met by cutting a memory mid-sentence.
+        """
+        if isinstance(max_tokens, bool) or not isinstance(max_tokens, int) or max_tokens < 1:
+            raise ValueError("max_tokens must be a positive integer")
+        records = self.search(query, limit=limit)
+        prefix = "Relevant project memory:\\n"
+        lines: list[str] = []
+        for record in records:
+            line = f"- [{record.category}] {record.content}"
+            candidate = prefix + "\\n".join((*lines, line))
+            estimate = max(1, (len(candidate.encode("utf-8")) + 2) // 3)
+            if estimate > max_tokens:
+                continue
+            lines.append(line)
+        if not lines:
+            return ""
+        return prefix + "\\n".join(lines)
 
     def delete(self, memory_id: str) -> bool:
         with self._connect() as connection:
