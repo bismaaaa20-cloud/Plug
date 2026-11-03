@@ -92,18 +92,18 @@ class MemoryStore:
         if isinstance(max_tokens, bool) or not isinstance(max_tokens, int) or max_tokens < 1:
             raise ValueError("max_tokens must be a positive integer")
         records = self.search(query, limit=limit)
-        prefix = "Relevant project memory:\\n"
+        prefix = "Relevant project memory:\n"
         lines: list[str] = []
         for record in records:
             line = f"- [{record.category}] {record.content}"
-            candidate = prefix + "\\n".join((*lines, line))
+            candidate = prefix + "\n".join((*lines, line))
             estimate = max(1, (len(candidate.encode("utf-8")) + 2) // 3)
             if estimate > max_tokens:
                 continue
             lines.append(line)
         if not lines:
             return ""
-        return prefix + "\\n".join(lines)
+        return prefix + "\n".join(lines)
 
     def delete(self, memory_id: str) -> bool:
         with self._connect() as connection:
