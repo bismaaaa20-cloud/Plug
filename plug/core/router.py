@@ -47,6 +47,9 @@ def _index_documents(documents: list[tuple[str, frozenset[str]]]) -> dict[str, s
 
 
 def _phase_for(terms: frozenset[str]) -> str:
+    # Explicit terminal actions take precedence over media/content nouns.
+    if terms & _PHASE_TERMS[-1][1]:
+        return "deliver"
     for phase, phase_terms in _PHASE_TERMS:
         if terms & phase_terms:
             return phase
@@ -194,11 +197,14 @@ class ContextRouter:
         skill_ids: set[str] = set()
         for term in query_terms:
             skill_ids.update(self._skill_index.get(term, ()))
+        skill_by_name = self.skills._skills
+        if skill_name and skill_name.lower() in skill_by_name:
+            skill_ids.add(skill_name.lower())
+
         plugin_ids: set[str] = set()
         for term in query_terms:
             plugin_ids.update(self._plugin_index.get(term, ()))
 
-        skill_by_name = self.skills._skills
         skill_matches: list[tuple[Skill, float]] = []
         for name in skill_ids:
             skill = skill_by_name[name]
