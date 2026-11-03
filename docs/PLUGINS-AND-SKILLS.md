@@ -31,30 +31,34 @@ A skill is a portable directory with a `SKILL.md` file. Its front matter require
 
 Create a scaffold with `plug.skills.builder.create_skill(...)`.
 
-## Automatic context routing
+## Automatic multi-plugin and skill routing
 
-`ContextRouter.route(message, plugins, context="", active_skill=None, limit=5)` ranks the available skills and plugins for the current task.
+`ContextRouter.route(message, plugins, context="", active_skill=None, limit=30)` returns multiple relevant skills and plugins, not just one winner. Set `limit=300` to allow up to 300 of each type, or `limit=None` to return every matching candidate. The default is 30 per type.
 
-- Uses the user's current request, optional task context, skill descriptions, skill triggers, plugin names, descriptions, keywords, and declared capabilities.
-- Gives stronger weight to exact/multiword trigger and keyword matches than loose token overlap.
-- Can use the currently active skill as an additional signal, so the selector can choose companion plugins that fit the skill workflow.
-- Returns ranked skill and plugin candidates plus `selected_skill` and `selected_plugin` convenience properties.
-- Uses deterministic scoring and stable tie-breaking; it does not call an LLM or require an API key.
+The fast selector uses a cached inverted token index:
+1. Normalize the request and optional project context once.
+2. Retrieve only skill/plugin IDs whose indexed terms overlap the request, rather than rescoring every catalog entry.
+3. Score shortlisted candidates using token overlap, coverage, exact trigger/keyword phrase matches, and the active skill signal.
+4. Return stable relevance-ranked skill and plugin lists.
+5. Build a suggested workflow order by broad phase: understand, research, analyze, create, transform, validate, deliver. Items in the same phase are ordered by relevance and stable ID.
+
+The decision exposes `selected_skills`, `selected_plugins`, and `workflow` in addition to the ranked score tuples. The old singular `selected_skill` and `selected_plugin` convenience properties remain for compatibility.
 
 Example:
 
 ```python
 decision = router.route(
-    "Prepare a YouTube video script and title",
+    "Research this topic, create images and a video, then publish",
     available_plugins,
     context="Current project: YouTube creator workflow",
     active_skill="youtube-creator",
+    limit=300,
 )
-plugin_candidates = decision.plugins
-skill_candidates = decision.skills
+for step in decision.workflow:
+    print(step.phase, step.kind, step.item_id)
 ```
 
-**Important safety boundary:** routing is recommendation only. It does not enable a plugin, grant permissions, execute tools, or bypass user approval. The caller must filter candidates against enabled state, granted permissions, required credentials, and action-specific approval before execution. The router is more context-aware than simple keyword overlap, but it is still deterministic—not semantic LLM reasoning.
+**Important safety and planning boundaries:** this is a fast deterministic candidate selector and phase arranger, not an LLM semantic planner or dependency solver. The phase order is a heuristic suggestion; it does not prove that outputs/inputs match or that every step is required. It never enables a plugin, grants permissions, executes tools, or bypasses user approval. The caller must validate dependencies, enabled state, permissions, credentials, and action-specific approval before execution.
 
 ## Memory
 
