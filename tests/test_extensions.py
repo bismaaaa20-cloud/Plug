@@ -60,6 +60,25 @@ class ExtensionTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(reopened.delete(record.id))
             self.assertEqual(reopened.search("SQLite Python"), ())
 
+    def test_memory_deduplicates_and_recalls_with_a_token_budget(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = MemoryStore(Path(directory) / "memory.sqlite3")
+            first = store.remember(
+                "The router uses cached inverted indexes for fast plugin selection",
+                category="decision",
+            )
+            duplicate = store.remember(
+                "The router uses cached inverted indexes for fast plugin selection",
+                category="decision",
+            )
+            self.assertEqual(first.id, duplicate.id)
+            context = store.recall_context("router plugin selection", max_tokens=80)
+            self.assertIn("cached inverted indexes", context)
+            self.assertLessEqual((len(context.encode("utf-8")) + 2) // 3, 80)
+            self.assertEqual(store.recall_context("unrelated topic", max_tokens=80), "")
+            with self.assertRaises(ValueError):
+                store.recall_context("router", max_tokens=0)
+
     def test_builder_refuses_to_overwrite(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             create_skill(directory, "safe-skill", description="A safe skill")
