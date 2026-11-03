@@ -85,6 +85,33 @@ class RouteDecision:
     def selected_plugins(self) -> tuple[PluginManifest, ...]:
         return tuple(plugin for plugin, _ in self.plugins)
 
+    def to_prompt_context(self, *, max_tokens: int = 512, max_items: int = 12) -> str:
+        """Return a compact tool summary; never include full skill instructions.
+
+        Token count is a conservative local estimate (UTF-8 bytes / 3), not a
+        provider tokenizer. The character ceiling prevents unbounded prompt growth.
+        """
+        if isinstance(max_tokens, bool) or not isinstance(max_tokens, int) or max_tokens < 1:
+            raise ValueError("max_tokens must be a positive integer")
+        if isinstance(max_items, bool) or not isinstance(max_items, int) or max_items < 1:
+            raise ValueError("max_items must be a positive integer")
+
+        budget = max_tokens * 3
+        lines: list[str] = []
+        used = 0
+        for step in self.workflow[:max_items]:
+            line = f"{step.phase}:{step.kind}:{step.item_id}"
+            cost = max(1, (len(line.encode("utf-8")) + 2) // 3)
+            if used + cost > max_tokens:
+                break
+            lines.append(line)
+            used += cost
+        if not lines:
+            return ""
+        # Deliberately omit descriptions, permissions, scores, and skill bodies.
+        result = "Plug workflow: " + "; ".join(lines)
+        return result[:budget]
+
 
 class ContextRouter:
     """Selects many relevant extensions with cached inverted-index retrieval."""
