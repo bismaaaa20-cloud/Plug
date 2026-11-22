@@ -26,63 +26,73 @@ jobs:
           import zipfile
           from pathlib import Path
 
-          extracted = Path('source')
+          extracted = Path("source")
           extracted.mkdir()
-          with tarfile.open('plug-source.tar.xz', 'r:xz') as archive:
-              archive.extractall(extracted, filter='data')
-          catalog = extracted / 'plug' / 'skills' / 'catalog'
+          with tarfile.open("plug-source.tar.xz", "r:xz") as archive:
+              archive.extractall(extracted, filter="data")
+          catalog = extracted / "plug" / "skills" / "catalog"
           if not catalog.is_dir():
-              raise SystemExit('Skill catalog not found in source archive')
-          root = Path('claude-plugin')
-          skills_root = root / 'skills'
+              raise SystemExit("Skill catalog not found in source archive")
+
+          root = Path("claude-plugin")
+          skills_root = root / "skills"
           skills_root.mkdir(parents=True)
           count = 0
           for skill_dir in sorted(p for p in catalog.iterdir() if p.is_dir()):
-              skill_file = skill_dir / 'SKILL.md'
+              skill_file = skill_dir / "SKILL.md"
               if not skill_file.is_file():
                   continue
-              raw = skill_file.read_text(encoding='utf-8')
-              if not raw.startswith('---\\n'):
-                  raise SystemExit(f'Missing YAML frontmatter: {skill_file}')
-              end = raw.find('\\n---', 4)
+              raw = skill_file.read_text(encoding="utf-8")
+              if not raw.startswith("---\n"):
+                  raise SystemExit(f"Missing YAML frontmatter: {skill_file}")
+              end = raw.find("\n---", 4)
               if end < 0:
-                  raise SystemExit(f'Unclosed YAML frontmatter: {skill_file}')
+                  raise SystemExit(f"Unclosed YAML frontmatter: {skill_file}")
               front = raw[4:end]
-              if not re.search(r'(?m)^name:\\s*\\S', front):
-                  raise SystemExit(f'Missing name in frontmatter: {skill_file}')
-              if not re.search(r'(?m)^description:\\s*\\S', front):
-                  raise SystemExit(f'Missing description in frontmatter: {skill_file}')
+              if not re.search(r"(?m)^name:\s*\S", front):
+                  raise SystemExit(f"Missing name in frontmatter: {skill_file}")
+              if not re.search(r"(?m)^description:\s*\S", front):
+                  raise SystemExit(f"Missing description in frontmatter: {skill_file}")
               target = skills_root / skill_dir.name
-              for item in skill_dir.rglob('*'):
-                  if item.is_file() and '__pycache__' not in item.parts and item.suffix not in {'.pyc', '.pyo'}:
+              for item in skill_dir.rglob("*"):
+                  if item.is_file() and "__pycache__" not in item.parts and item.suffix not in {".pyc", ".pyo"}:
                       dest = target / item.relative_to(skill_dir)
                       dest.parent.mkdir(parents=True, exist_ok=True)
                       dest.write_bytes(item.read_bytes())
               count += 1
+
           if count != 200:
-              raise SystemExit(f'Expected 200 skills, packaged {count}')
+              raise SystemExit(f"Expected 200 skills, packaged {count}")
           manifest = {
-              'name': 'plug-muk',
-              'version': '1.0.0',
-              'description': 'Plug skill collection for Muk: task planning, research, coding, review, and multi-AI collaboration workflows.',
-              'author': {'name': 'Plug Project'},
-              'license': 'MIT'
+              "name": "plug-muk",
+              "version": "1.0.0",
+              "description": "Plug skill collection for Muk: task planning, research, coding, review, and multi-AI collaboration workflows.",
+              "author": {"name": "Plug Project"},
+              "license": "MIT"
           }
-          plugin_dir = root / '.claude-plugin'
+          plugin_dir = root / ".claude-plugin"
           plugin_dir.mkdir()
-          (plugin_dir / 'plugin.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')
-          (root / 'README.md').write_text('# Plug — Claude Plugin\\n\\nThis archive contains 200 standalone Agent Skills from Plug. Each skill is located in skills/<skill-name>/SKILL.md.\\n\\nInstall by uploading this ZIP in Claude Plugins. This package exposes the skills; it does not run Plug’s Python orchestration server.\\n', encoding='utf-8')
-          output = Path('Plug-Claude-Plugin.zip')
-          with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-              for item in sorted(root.rglob('*')):
+          (plugin_dir / "plugin.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          (root / "README.md").write_text(
+              "# Plug — Claude Plugin\n\n"
+              "This archive contains 200 standalone Agent Skills from Plug. "
+              "Each skill is located in skills/<skill-name>/SKILL.md.\n\n"
+              "Install by uploading this ZIP in Claude Plugins. "
+              "This package exposes the skills; it does not run Plug's Python orchestration server.\n",
+              encoding="utf-8"
+          )
+
+          output = Path("Plug-Claude-Plugin.zip")
+          with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+              for item in sorted(root.rglob("*")):
                   if item.is_file():
                       z.write(item, item.relative_to(root).as_posix())
           with zipfile.ZipFile(output) as z:
               assert z.testzip() is None
               names = z.namelist()
-              assert '.claude-plugin/plugin.json' in names
-              assert sum(name.endswith('/SKILL.md') for name in names) == 200
-          print(f'Claude plugin ZIP: {output.stat().st_size} bytes; skills: {count}')
+              assert ".claude-plugin/plugin.json" in names
+              assert sum(name.endswith("/SKILL.md") for name in names) == 200
+          print(f"Claude plugin ZIP: {output.stat().st_size} bytes; skills: {count}")
           PY
       - uses: actions/upload-artifact@v4
         with:
