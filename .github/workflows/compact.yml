@@ -27,7 +27,7 @@ jobs:
           from zipfile import ZIP_DEFLATED, ZipFile
           import subprocess
 
-          paths = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\\0")
+          paths = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\0")
           archive_path = Path("plug-source.zip")
           with ZipFile(archive_path, "w", ZIP_DEFLATED, compresslevel=9) as archive:
               for name in paths:
@@ -60,7 +60,7 @@ jobs:
           import subprocess
 
           keep = {"README.md", ".gitignore", "install.py", "plug-source.zip", ".github/workflows/compact.yml"}
-          tracked = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\\0")
+          tracked = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\0")
           for name in tracked:
               if not name or name in keep:
                   continue
