@@ -24,27 +24,24 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          from zipfile import ZIP_DEFLATED, ZipFile
           import subprocess
+          import tarfile
 
           paths = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\0")
-          archive_path = Path("plug-source.zip")
-          with ZipFile(archive_path, "w", ZIP_DEFLATED, compresslevel=9) as archive:
+          archive_path = Path("plug-source.tar.xz")
+          with tarfile.open(archive_path, "w:xz", preset=9) as archive:
               for name in paths:
                   if not name:
                       continue
                   path = Path(name)
                   if path.is_file() and "__pycache__" not in path.parts and path.suffix not in {".pyc", ".pyo"}:
-                      archive.write(path, path.as_posix())
+                      archive.add(path, arcname=path.as_posix(), recursive=False)
           size = archive_path.stat().st_size
           print(f"Complete source archive: {size} bytes")
           if size >= 190 * 1024:
               raise SystemExit("Compressed source archive is too large; source tree was not compacted")
-          with ZipFile(archive_path) as archive:
-              bad = archive.testzip()
-              if bad:
-                  raise SystemExit(f"Archive integrity failure: {bad}")
-              names = archive.namelist()
+          with tarfile.open(archive_path, "r:xz") as archive:
+              names = archive.getnames()
               plugins = sum(name.endswith("/plugin.json") for name in names)
               skills = sum(name.endswith("/SKILL.md") for name in names)
               assert plugins == 200, f"expected 200 plugins, found {plugins}"
@@ -59,7 +56,7 @@ jobs:
           import shutil
           import subprocess
 
-          keep = {"README.md", ".gitignore", "install.py", "plug-source.zip", ".github/workflows/compact.yml"}
+          keep = {"README.md", ".gitignore", "install.py", "plug-source.tar.xz", ".github/workflows/compact.yml"}
           tracked = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\0")
           for name in tracked:
               if not name or name in keep:

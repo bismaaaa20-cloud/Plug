@@ -1,13 +1,10 @@
 # Plug — compact repository
 
 Plug is a provider-neutral multi-AI orchestration foundation for Python 3.11+.
-It includes the runtime, tests, documentation, 200 built-in plugins, and 200
-task-specific skills.
+The complete project source, tests, docs, 200 built-in plugins, and 200 skills
+are preserved in `plug-source.tar.xz`.
 
-## Restore the complete source tree
-
-This repository stores the complete project in `plug-source.zip` to keep the
-Git working tree at or below 200 KiB. Restore it with:
+## Restore the full source tree
 
 ```bash
 python install.py --dest ./plug-source
@@ -18,12 +15,13 @@ python -X dev -W error -m unittest discover -s tests -v
 To restore directly into the current directory, use
 `python install.py --dest . --force`.
 
-The compact archive is checked by GitHub Actions before it is committed.
-The 200 plugin manifests, 200 skill definitions, runtime modules, tests, and
-documentation remain inside the archive; they are not discarded.
+GitHub Actions verifies the archive, checks the 200-plugin/200-skill catalog,
+and enforces a maximum 204,800-byte total for the tracked working tree before
+committing the compact form. The original source files are archived, not
+discarded.
 
-## Scope and limitations
+## Scope
 
-The project provides local planning, task routing, teamwork, plugin and skill
+Plug provides local task planning, routing, teamwork, plugin and skill
 registries, and SQLite memory foundations. Real provider/API adapters and
 automatic control of external AI applications are not claimed as implemented.
