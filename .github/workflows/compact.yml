@@ -1,0 +1,47 @@
+name: Verify compact Plug repository
+
+on:
+  push:
+    branches:
+      - "work/6000-plugin-skill-expansion"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Enforce 200 KiB checkout and validate source archive
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+          import tarfile
+
+          paths = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\0")
+          total = sum(Path(name).stat().st_size for name in paths if name and Path(name).is_file())
+          print(f"Tracked repository size: {total} bytes")
+          assert total <= 204800, f"repository exceeds 200 KiB: {total}"
+          with tarfile.open("plug-source.tar.xz", "r:xz") as archive:
+              names = archive.getnames()
+              plugins = sum(name.endswith("/plugin.json") for name in names)
+              skills = sum(name.endswith("/SKILL.md") for name in names)
+              print(f"Archive entries: {len(names)}; plugins: {plugins}; skills: {skills}")
+              assert plugins == 200
+              assert skills == 200
+              for required in ("plug/core/router.py", "plug/plugins/registry.py", "plug/skills/loader.py", "tests/test_builtin_catalog.py"):
+                  assert required in names, f"missing {required}"
+          PY
+      - name: Restore source using the public installer
+        run: python install.py --dest "$RUNNER_TEMP/plug-source"
+      - name: Run full test suite against restored source
+        run: |
+          cd "$RUNNER_TEMP/plug-source"
+          python -X dev -W error -m unittest discover -s tests -v
