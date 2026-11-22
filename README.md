@@ -20,6 +20,17 @@ and enforces a maximum 204,800-byte total for the tracked working tree before
 committing the compact form. The original source files are archived, not
 discarded.
 
+## Standalone Claude Token Optimizer
+
+This branch also ships `claude-token-optimizer.zip`, a standalone Claude Code
+plugin with a local MCP compressor, reversible context vault, conservative
+message pruning, coding-efficiency skill, optional Anthropic token counting,
+and tests. The ZIP is **13,678 bytes** (limit: 204,800 bytes).
+
+Extract the ZIP, then run `claude --plugin-dir ./claude-token-optimizer` from
+the directory containing the extracted plugin folder. See the plugin's README
+for setup, tools, and safety details.
+
 ## Scope
 
 Plug provides local task planning, routing, teamwork, plugin and skill
