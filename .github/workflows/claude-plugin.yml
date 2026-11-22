@@ -54,11 +54,9 @@ jobs:
               if not re.search(r"(?m)^description:\s*\S", front):
                   raise SystemExit(f"Missing description in frontmatter: {skill_file}")
               target = skills_root / skill_dir.name
-              for item in skill_dir.rglob("*"):
-                  if item.is_file() and "__pycache__" not in item.parts and item.suffix not in {".pyc", ".pyo"}:
-                      dest = target / item.relative_to(skill_dir)
-                      dest.parent.mkdir(parents=True, exist_ok=True)
-                      dest.write_bytes(item.read_bytes())
+              # Keep only the entrypoint; optional references and assets remain in source.
+              dest = target / "SKILL.md"
+              dest.write_text(raw.rstrip() + "\\n", encoding="utf-8")
               count += 1
 
           if count != 200:
@@ -92,7 +90,10 @@ jobs:
               names = z.namelist()
               assert ".claude-plugin/plugin.json" in names
               assert sum(name.endswith("/SKILL.md") for name in names) == 200
-          print(f"Claude plugin ZIP: {output.stat().st_size} bytes; skills: {count}")
+          size = output.stat().st_size
+          print(f"Claude plugin ZIP: {size} bytes; skills: {count}")
+          if size > 204800:
+              raise SystemExit(f"ZIP exceeds 200 KiB limit: {size} > 204800 bytes")
           PY
       - uses: actions/upload-artifact@v4
         with:
