@@ -1,0 +1,54 @@
+name: Build compact Plug ZIP
+
+on:
+  push:
+    branches:
+      - "work/6000-plugin-skill-expansion"
+    paths:
+      - "plug/**"
+      - "tools/package.py"
+      - "pyproject.toml"
+      - "README.md"
+      - "SECURITY.md"
+      - ".github/workflows/package.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build and validate ZIP (200 KiB maximum)
+        run: python tools/package.py --output dist/Plug.zip --max-bytes 204800
+      - name: Smoke-test packaged catalog
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          with ZipFile("dist/Plug.zip") as archive:
+              names = archive.namelist()
+              assert sum(name.endswith("/plugin.json") for name in names) == 200
+              assert sum(name.endswith("/SKILL.md") for name in names) == 200
+              assert "plug/__init__.py" in names
+              assert "plug/core/router.py" in names
+              assert "plug/plugins/registry.py" in names
+              assert "plug/skills/loader.py" in names
+              assert not any(name.startswith(("tests/", "docs/")) for name in names)
+              print(f"Package smoke test passed: {len(names)} files, {Path('dist/Plug.zip').stat().st_size} bytes")
+          PY
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Plug-200KB
+          path: dist/Plug.zip
+          if-no-files-found: error
+          retention-days: 30

@@ -40,7 +40,7 @@ integration must document its connection method and permissions explicitly.
 
 ## Built-in catalog (200 plugins + 200 skills)
 
-The repository now contains 200 local plugin packages under
+The repository contains 200 local plugin packages under
 `plug/plugins/catalog/` and 200 skill packages under
 `plug/skills/catalog/`. Each plugin has a manifest and executable entrypoint;
 each skill has a `SKILL.md` and helper script. See
@@ -52,6 +52,22 @@ Install/verify the bundled catalog with:
 python -m plug.builtin_catalog --install
 python -m unittest tests.test_builtin_catalog -v
 ```
+
+## Compact ZIP distribution (maximum 200 KiB)
+
+Build a ready-to-transfer source ZIP containing the complete runtime and all
+400 built-in catalog entries, without tests, development docs, or Git metadata:
+
+```bash
+python tools/package.py
+```
+
+The output is `dist/Plug.zip`. The packager uses maximum DEFLATE compression,
+checks ZIP integrity, verifies exactly 200 plugin manifests and 200 skill
+definitions, and refuses to leave an archive larger than 204,800 bytes.
+GitHub Actions builds the same ZIP on pushes to the expansion branch and
+publishes it as the `Plug-200KB` workflow artifact. The repository itself is
+not reduced or stripped to meet the transfer-size target.
 
 ## Local extensions and token efficiency
 
