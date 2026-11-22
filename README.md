@@ -1,95 +1,29 @@
-# Plug
+# Plug — compact repository
 
-Plug is a provider-neutral foundation for coordinating a team of AI agents.
+Plug is a provider-neutral multi-AI orchestration foundation for Python 3.11+.
+It includes the runtime, tests, documentation, 200 built-in plugins, and 200
+task-specific skills.
 
-## Current scope
+## Restore the complete source tree
 
-- Validated task plans represented as a dependency DAG.
-- Parallel execution for independent tasks, with bounded concurrency.
-- Sequential execution across dependency layers.
-- Explicit agent registry and provider protocol.
-- Adaptive task allocation using skill match, reliability, preference, and load.
-- Strategy selection: direct, parallel, pipeline, or collaborative.
-- Friendly, constructive status and revision messages.
-- No mandatory API keys or third-party runtime dependencies for the core.
-
-## Desktop-first direction
-
-Plug is being designed to coordinate AI tools available on the user's computer.
-The teamwork algorithm is transport-neutral: future adapters may connect to
-local models, desktop applications, or browser sessions where supported.
-This repository does not yet claim automatic control of desktop apps or browser
-interfaces; that requires a real, tested desktop integration layer.
-
-## Not implemented yet
-
-There is no LLM-driven planner, desktop automation adapter, persistent job
-queue, web UI, or automatic model discovery in this stage. Tests use local fake
-agents; no provider output is fabricated by the runtime.
-
-## Quick start
-
-Python 3.11+:
+This repository stores the complete project in `plug-source.zip` to keep the
+Git working tree at or below 200 KiB. Restore it with:
 
 ```bash
-python -m unittest discover -s tests -v
+python install.py --dest ./plug-source
+cd plug-source
+python -X dev -W error -m unittest discover -s tests -v
 ```
 
-No API key is needed to use the planning and allocation core. Any future
-integration must document its connection method and permissions explicitly.
+To restore directly into the current directory, use
+`python install.py --dest . --force`.
 
-## Built-in catalog (200 plugins + 200 skills)
+The compact archive is checked by GitHub Actions before it is committed.
+The 200 plugin manifests, 200 skill definitions, runtime modules, tests, and
+documentation remain inside the archive; they are not discarded.
 
-The repository contains 200 local plugin packages under
-`plug/plugins/catalog/` and 200 skill packages under
-`plug/skills/catalog/`. Each plugin has a manifest and executable entrypoint;
-each skill has a `SKILL.md` and helper script. See
-[Built-in catalog documentation](docs/BUILTIN-CATALOG.md).
+## Scope and limitations
 
-Install/verify the bundled catalog with:
-
-```bash
-python -m plug.builtin_catalog --install
-python -m unittest tests.test_builtin_catalog -v
-```
-
-## Compact ZIP distribution (maximum 200 KiB)
-
-Build a ready-to-transfer source ZIP containing the complete runtime and all
-400 built-in catalog entries, without tests, development docs, or Git metadata:
-
-```bash
-python tools/package.py
-```
-
-The output is `dist/Plug.zip`. The packager uses maximum DEFLATE compression,
-checks ZIP integrity, verifies exactly 200 plugin manifests and 200 skill
-definitions, and refuses to leave an archive larger than 204,800 bytes.
-GitHub Actions builds the same ZIP on pushes to the expansion branch and
-publishes it as the `Plug-200KB` workflow artifact. The repository itself is
-not reduced or stripped to meet the transfer-size target.
-
-## Local extensions and token efficiency
-
-Plug includes a local SQLite memory store. Use `MemoryStore.recall_context()` to inject
-only a few relevant memories under a small prompt budget; exact duplicate notes are
-not stored twice. Root `AGENTS.md` provides a compact always-on working policy for
-coding agents that support repository instruction files. The longer guide is
-[docs/LEAN-MODE.md](docs/LEAN-MODE.md). Memory capture and prompt injection must be
-connected by the host application; this repository does not claim automatic capture
-from every external AI chat or tool event.
-
-Local extensions (initial foundation)
-
-Plug now includes a local plugin SDK and registry, a portable `SKILL.md` loader,
-scaffold builders for both extensions, deterministic context-based selection,
-and a local SQLite memory store. See [Plugins and Skills](docs/PLUGINS-AND-SKILLS.md)
-for formats, usage boundaries, and current limitations. See the [capability matrix](docs/CAPABILITY-MATRIX.md) for what works locally and what requires an external tool.
-
-Plugin code is trusted Python executed in-process, not sandboxed. Plugins are
-disabled by default and require explicit permission grants. Skill helper scripts
-are scaffolds and must be reviewed before execution. The current router uses
-keyword overlap; it is not yet an LLM-based semantic router. The catalog contains 200 first-party plugin packages and 200 task-specific skill
-packages. This is not a claim that 200 third-party services or live AI integrations
-are connected. Plugins are executable local tools; skills are instruction packages
-that guide an agent and may require additional tools for external actions.
+The project provides local planning, task routing, teamwork, plugin and skill
+registries, and SQLite memory foundations. Real provider/API adapters and
+automatic control of external AI applications are not claimed as implemented.

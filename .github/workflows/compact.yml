@@ -1,0 +1,91 @@
+name: Compact full repository
+
+on:
+  push:
+    branches:
+      - "work/6000-plugin-skill-expansion"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  compact:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip compact]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Create and verify complete source archive
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZIP_DEFLATED, ZipFile
+          import subprocess
+
+          paths = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\\0")
+          archive_path = Path("plug-source.zip")
+          with ZipFile(archive_path, "w", ZIP_DEFLATED, compresslevel=9) as archive:
+              for name in paths:
+                  if not name:
+                      continue
+                  path = Path(name)
+                  if path.is_file() and "__pycache__" not in path.parts and path.suffix not in {".pyc", ".pyo"}:
+                      archive.write(path, path.as_posix())
+          size = archive_path.stat().st_size
+          print(f"Complete source archive: {size} bytes")
+          if size >= 190 * 1024:
+              raise SystemExit("Compressed source archive is too large; source tree was not compacted")
+          with ZipFile(archive_path) as archive:
+              bad = archive.testzip()
+              if bad:
+                  raise SystemExit(f"Archive integrity failure: {bad}")
+              names = archive.namelist()
+              plugins = sum(name.endswith("/plugin.json") for name in names)
+              skills = sum(name.endswith("/SKILL.md") for name in names)
+              assert plugins == 200, f"expected 200 plugins, found {plugins}"
+              assert skills == 200, f"expected 200 skills, found {skills}"
+              for required in ("plug/core/router.py", "plug/plugins/registry.py", "plug/skills/loader.py", "tests/test_builtin_catalog.py"):
+                  assert required in names, f"missing {required}"
+          PY
+      - name: Reduce tracked working tree and enforce 200 KiB
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import shutil
+          import subprocess
+
+          keep = {"README.md", ".gitignore", "install.py", "plug-source.zip", ".github/workflows/compact.yml"}
+          tracked = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\\0")
+          for name in tracked:
+              if not name or name in keep:
+                  continue
+              path = Path(name)
+              if path.is_dir():
+                  shutil.rmtree(path)
+              elif path.exists():
+                  path.unlink()
+          for directory in sorted((p for p in Path(".").rglob("*") if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
+              try:
+                  directory.rmdir()
+              except OSError:
+                  pass
+          files = [Path(name) for name in keep if Path(name).is_file()]
+          total = sum(path.stat().st_size for path in files)
+          print(f"Final tracked working-tree bytes: {total}")
+          if total > 204800:
+              raise SystemExit(f"repository exceeds 200 KiB: {total} bytes")
+          PY
+      - name: Commit compact repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Compact full Plug repository under 200 KiB [skip compact]"
+            git push origin "HEAD:refs/heads/${GITHUB_REF_NAME}"
+          fi
